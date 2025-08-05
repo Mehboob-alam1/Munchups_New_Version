@@ -90,9 +90,9 @@ class _OrderTabsState extends State<OrderTabs> {
             ),
           ),
         ),
-        body: const TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            children: [MyOrderList(), LiveOrderList(), CompleteOrderList()]),
+        body: TabBarView(
+            physics: const NeverScrollableScrollPhysics(),
+            children: [MyOrderList(orderData: const [], onRefresh: () {},), const LiveOrderList(), const CompleteOrderList()]),
       ),
     );
   }

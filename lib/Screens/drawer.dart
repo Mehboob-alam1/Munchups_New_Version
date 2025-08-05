@@ -151,8 +151,8 @@ class _DrawerPageState extends State<DrawerPage> {
                       PageNavigateScreen().push(
                           context,
                           GrocerProfilePage(
-                            userId: userData['user_id'],
-                            userType: getUserType,
+                            // userId: userData['user_id'],
+                            // userType: getUserType,
                             currentUser: getUserType,
                           ));
                     }
