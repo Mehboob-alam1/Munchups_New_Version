@@ -55,8 +55,8 @@ class _AllGrocerListState extends State<AllGrocerList> {
                                     PageNavigateScreen().push(
                                         context,
                                         GrocerProfilePage(
-                                          userId: data['user_id'],
-                                          userType: data['user_type'],
+                                          // userId: data['user_id'],
+                                          // userType: data['user_type'],
                                           currentUser: 'buyer',
                                         ));
                                   },

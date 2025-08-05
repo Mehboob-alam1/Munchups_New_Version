@@ -98,8 +98,8 @@ class _FollowingListState extends State<FollowingList> {
                                   PageNavigateScreen().push(
                                       context,
                                       GrocerProfilePage(
-                                        userId: data.userId,
-                                        userType: data.userType,
+                                        // userId: data.userId,
+                                        // userType: data.userType,
                                         currentUser: 'buyer',
                                       ));
                                 }
