@@ -16,7 +16,7 @@ import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Auth/login.dart';
 import 'package:munchups_app/Screens/Buyer/Card%20Payment/card_payment_form.dart';
 import 'package:munchups_app/Screens/Buyer/Demand%20Food/demand_food_list.dart';
-import 'package:munchups_app/Screens/Buyer/Demand%20Food/on_demand_food_form.dart';
+import 'package:munchups_app/Screens/Buyer/Demand%20Food/on_demand_food_form.dart' hide addressController;
 import 'package:munchups_app/Screens/Buyer/Following%20List/following_list.dart';
 import 'package:munchups_app/Screens/Buyer/My%20Orders/order_tabs.dart';
 import 'package:munchups_app/Screens/Buyer/Profile/profile.dart';
@@ -137,8 +137,8 @@ class _DrawerPageState extends State<DrawerPage> {
                   onTap: () {
                     PageNavigateScreen().back(context);
                     if (getUserType == 'buyer') {
-                      PageNavigateScreen()
-                          .push(context, const BuyerProfilePage());
+                      // PageNavigateScreen()
+                      //     .push(context, const BuyerProfilePage());
                     } else if (getUserType == 'chef') {
                       PageNavigateScreen().push(
                           context,
