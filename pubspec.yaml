@@ -1,0 +1,61 @@
+name: munchups_app
+description: A new Flutter project.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.2
+  intl: ^0.20.2
+  share_plus: ^11.0.0
+  #flutter_credit_card: ^4.0.1
+  # google_maps_flutter: ^2.5.3
+  location: ^8.0.1
+  sms_autofill: ^2.3.1
+  shared_preferences: ^2.2.2
+  image_picker: ^1.0.7
+  fluttertoast: ^8.2.4
+  http: ^1.2.1
+  # url_launcher: ^6.2.6
+  flutter_rating_bar: ^4.0.1
+  flutter_stripe: ^11.5.0
+  country_picker: ^2.0.26
+  google_places_flutter: ^2.0.8
+  permission_handler: ^12.0.1
+  url_launcher: ^6.3.1
+  google_maps_flutter: ^2.9.0
+  just_audio: ^0.10.4
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/images/512-logo.jpg"  
+
+flutter:
+
+  uses-material-design: true
+
+  
+  assets:
+    - assets/images/
+    - assets/sound/
+  #   - images/a_dot_ham.jpeg
+
+  
