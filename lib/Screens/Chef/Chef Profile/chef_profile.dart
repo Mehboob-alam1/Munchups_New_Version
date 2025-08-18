@@ -347,9 +347,16 @@ class _ChefProfilePageState extends State<ChefProfilePage> {
                                   overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 10),
                               widget.currentUser == 'buyer'
-                                  ? AddToCardWidget(
-                                      data: dishData,
-                                      checkGuestUser: guestUserData,
+                                  ? AddToCard(
+                                      itemId: dishData['dish_id']?.toString() ?? '',
+                                      itemName: dishData['dish_name'] ?? '',
+                                      itemImage: dishData['dish_images'] != 'NA' && dishData['dish_images'].isNotEmpty
+                                          ? dishData['dish_images'][0]['kitchen_image'] ?? ''
+                                          : '',
+                                      itemPrice: double.tryParse(dishData['dish_price']?.toString() ?? '0') ?? 0.0,
+                                      sellerId: widget.userId?.toString() ?? '',
+                                      sellerType: widget.userType,
+                                      sellerName: userData['profile_data']?['name'] ?? '',
                                     )
                                   : Center(
                                       child: Text('Dish Serving time',

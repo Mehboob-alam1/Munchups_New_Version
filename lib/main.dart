@@ -3,10 +3,14 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:munchups_app/splash.dart';
-import 'package:munchups_app/Component/providers/main_provider.dart';
+import 'package:munchups_app/core/di/injection_container.dart' as di;
+import 'package:munchups_app/presentation/providers/main_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize dependency injection
+  await di.init();
   
   try {
     Stripe.publishableKey =

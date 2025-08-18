@@ -15,6 +15,24 @@ dependencies:
   # State Management
   provider: ^6.1.1
   
+  # Dependency Injection
+  get_it: ^7.6.7
+  
+  # HTTP Client
+  dio: ^5.4.0
+  
+  # JSON Serialization
+  json_annotation: ^4.8.1
+  
+  # Result Handling
+  dartz: ^0.10.1
+  
+  # Network Info
+  connectivity_plus: ^5.0.2
+  
+  # Equatable for value equality
+  equatable: ^2.0.5
+  
   cupertino_icons: ^1.0.2
   intl: ^0.20.2
   share_plus: ^11.0.0
@@ -43,6 +61,10 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  
+  # JSON Code Generation
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
 
 flutter_icons:
   android: true

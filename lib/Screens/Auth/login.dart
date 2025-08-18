@@ -53,9 +53,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Form(
             key: globalKey,
             child: Padding(
-              padding: EdgeInsets.only(
-                  left: SizeConfig.getSize15(context: context),
-                  right: SizeConfig.getSize15(context: context)),
+              padding: EdgeInsets.symmetric(
+                horizontal: SizeConfig.getSize15(context: context),
+              ),
               child: Column(
                 children: [
                   SizedBox(height: SizeConfig.getSize55(context: context)),
@@ -89,14 +89,31 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget emialFiled() {
     return Padding(
-      padding: EdgeInsets.only(
-          left: SizeConfig.getSize10(context: context),
-          right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhiteColor(
-        labelText: 'Email',
+      padding: EdgeInsets.symmetric(
+          horizontal: SizeConfig.getSize10(context: context)),
+      child: TextFormField(
         textInputAction: TextInputAction.next,
         keyboardType: TextInputType.emailAddress,
         style: white15bold,
+        decoration: InputDecoration(
+          hintText: 'Email',
+          hintStyle: white15bold,
+          filled: true,
+          fillColor: DynamicColor.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.lightBlack),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.lightBlack),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.primaryColor),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
         onChanged: (value) {
           setState(() {
             emailID = value;
@@ -117,25 +134,42 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget passwordFiled() {
     return Padding(
-      padding: EdgeInsets.only(
-          left: SizeConfig.getSize10(context: context),
-          right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhiteColor(
-        labelText: 'Password',
+      padding: EdgeInsets.symmetric(
+          horizontal: SizeConfig.getSize10(context: context)),
+      child: TextFormField(
         textInputAction: TextInputAction.done,
         keyboardType: TextInputType.visiblePassword,
         style: white15bold,
-        obsecureText: !passwordVisible,
-        suffixIcon: IconButton(
-          icon: Icon(
-            passwordVisible ? Icons.visibility : Icons.visibility_off,
-            color: DynamicColor.white,
+        obscureText: !passwordVisible,
+        decoration: InputDecoration(
+          hintText: 'Password',
+          hintStyle: white15bold,
+          filled: true,
+          fillColor: DynamicColor.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.lightBlack),
           ),
-          onPressed: () {
-            setState(() {
-              passwordVisible = !passwordVisible;
-            });
-          },
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.lightBlack),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: DynamicColor.primaryColor),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          suffixIcon: IconButton(
+            icon: Icon(
+              passwordVisible ? Icons.visibility : Icons.visibility_off,
+              color: DynamicColor.primaryColor,
+            ),
+            onPressed: () {
+              setState(() {
+                passwordVisible = !passwordVisible;
+              });
+            },
+          ),
         ),
         onChanged: (value) {
           setState(() {
@@ -157,9 +191,8 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget rememberAndForgetPass() {
     return Padding(
-      padding: EdgeInsets.only(
-          left: SizeConfig.getSize10(context: context),
-          right: SizeConfig.getSize10(context: context)),
+      padding: EdgeInsets.symmetric(
+          horizontal: SizeConfig.getSize10(context: context)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -206,9 +239,8 @@ class _LoginPageState extends State<LoginPage> {
             
             // Login button
             Padding(
-              padding: EdgeInsets.only(
-                  left: SizeConfig.getSize10(context: context),
-                  right: SizeConfig.getSize10(context: context)),
+              padding: EdgeInsets.symmetric(
+                  horizontal: SizeConfig.getSize10(context: context)),
                               child: CommanButton(
                   buttonName: authProvider.isLoading ? 'Logging in...' : 'Login',
                   onPressed: authProvider.isLoading 
