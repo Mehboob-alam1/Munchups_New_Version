@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/backgroundWidget.dart';
 import 'package:munchups_app/Comman%20widgets/comman_button/comman_botton.dart';
@@ -21,7 +22,10 @@ import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
 import 'package:munchups_app/Screens/Grocer/grocer_home.dart';
 import 'package:munchups_app/Screens/Setting/privacy&policy.dart';
 import 'package:munchups_app/Screens/Setting/terms&con.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../Component/providers/app_provider.dart';
+import '../../Component/providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -88,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.only(
           left: SizeConfig.getSize10(context: context),
           right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhite(
+      child: InputFieldsWithLightWhiteColor(
         labelText: 'Email',
         textInputAction: TextInputAction.next,
         keyboardType: TextInputType.emailAddress,
@@ -116,12 +120,12 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.only(
           left: SizeConfig.getSize10(context: context),
           right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhite(
+      child: InputFieldsWithLightWhiteColor(
         labelText: 'Password',
         textInputAction: TextInputAction.done,
         keyboardType: TextInputType.visiblePassword,
         style: white15bold,
-        obscureText: !passwordVisible,
+        obsecureText: !passwordVisible,
         suffixIcon: IconButton(
           icon: Icon(
             passwordVisible ? Icons.visibility : Icons.visibility_off,
@@ -176,7 +180,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           TextButton(
             onPressed: () {
-              PageNavigateScreen().push(context, const ForgotPassPage());
+              PageNavigateScreen().push(context, const ForgetPasswordPage());
             },
             child: Text('Forgot Password?', style: white15bold),
           ),
@@ -205,12 +209,14 @@ class _LoginPageState extends State<LoginPage> {
               padding: EdgeInsets.only(
                   left: SizeConfig.getSize10(context: context),
                   right: SizeConfig.getSize10(context: context)),
-              child: CommanButton(
-                text: authProvider.isLoading ? 'Logging in...' : 'Login',
-                onPressed: authProvider.isLoading ? null : _handleLogin,
-                backgroundColor: DynamicColor.primaryColor,
-                textColor: DynamicColor.white,
-              ),
+                              child: CommanButton(
+                  buttonName: authProvider.isLoading ? 'Logging in...' : 'Login',
+                  onPressed: authProvider.isLoading 
+                    ? () {} // Empty function when loading
+                    : () => _handleLogin(),
+                  // backgroundColor: DynamicColor.primaryColor,
+                  textColor: DynamicColor.white, shap: 12,
+                ),
             ),
             
             // Show loading indicator
@@ -262,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
         Text("Don't have an account? ", style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context, const RegisterPage());
+            PageNavigateScreen().push(context,  RegisterPage());
           },
           child: Text('Sign Up', style: white15bold),
         ),
@@ -277,14 +283,14 @@ class _LoginPageState extends State<LoginPage> {
         Text('By continuing, you agree to our ', style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context, const TermsAndConditionPage());
+            PageNavigateScreen().push(context,  TermsAndConditonPage());
           },
           child: Text('Terms & Conditions', style: white15bold),
         ),
         Text(' and ', style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context, const PrivacyAndPolicyPage());
+            PageNavigateScreen().push(context,  PrivacyPolicyPage());
           },
           child: Text('Privacy Policy', style: white15bold),
         ),

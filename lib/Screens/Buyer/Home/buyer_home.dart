@@ -12,7 +12,12 @@ import 'package:munchups_app/Screens/Buyer/Cart/card_list.dart';
 import 'package:munchups_app/Screens/Buyer/Chefs/all_chefs_list.dart';
 import 'package:munchups_app/Screens/Buyer/Grocers/all_grocer_list.dart';
 import 'package:munchups_app/Screens/drawer.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../Component/providers/app_provider.dart';
+import '../../../Component/providers/cart_provider.dart';
+import '../../../Component/providers/data_provider.dart';
 
 class BuyerHomePage extends StatefulWidget {
   const BuyerHomePage({super.key});
@@ -153,10 +158,12 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                   // Search bar
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: InputFieldsWithLightWhite(
+                    child: InputFieldsWithLightWhiteColor(
                       controller: context.read<AppProvider>().homeSearchTextController,
-                      hintText: 'Search for food...',
-                      prefixIcon: Icons.search,
+                      labelText: 'Search for food...',
+                      prefixIcon: Icons.search, onChanged: (String value) {
+
+                    },
                     ),
                   ),
                   

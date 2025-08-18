@@ -5,6 +5,9 @@ import 'package:munchups_app/Component/color_class/color_class.dart';
 import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/styles/styles.dart';
 import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
+import 'package:provider/provider.dart';
+
+import '../Component/providers/cart_provider.dart';
 
 class AddToCard extends StatefulWidget {
   final String itemId;

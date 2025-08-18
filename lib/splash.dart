@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:location/location.dart';
 import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
@@ -9,7 +10,12 @@ import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
 import 'package:munchups_app/Screens/Grocer/grocer_home.dart';
 import 'package:munchups_app/Screens/search_location.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Component/providers/app_provider.dart';
+import 'Component/providers/auth_provider.dart';
+import 'Component/providers/cart_provider.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key? key}) : super(key: key);
