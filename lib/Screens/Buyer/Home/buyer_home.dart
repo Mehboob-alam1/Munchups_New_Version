@@ -5,7 +5,7 @@ import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_l
 import 'package:munchups_app/Comman%20widgets/exit_page.dart';
 import 'package:munchups_app/Component/Strings/strings.dart';
 import 'package:munchups_app/Component/color_class/color_class.dart';
-import 'package:munchups_app/Component/global_data/global_data.dart';
+import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Component/styles/styles.dart';
 import 'package:munchups_app/Screens/Buyer/Cart/card_list.dart';
@@ -24,19 +24,19 @@ class BuyerHomePage extends StatefulWidget {
 class _BuyerHomePageState extends State<BuyerHomePage> {
   final GlobalKey<ScaffoldState> globalKey = GlobalKey();
   int changeImage = 0;
-  dynamic checkItemLocal;
 
   @override
   void initState() {
     super.initState();
-    getCartCount();
+    _initializeData();
   }
 
-  void getCartCount() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      checkItemLocal = jsonDecode(prefs.getString('cart').toString());
-    });
+  Future<void> _initializeData() async {
+    // Initialize cart data
+    await context.read<CartProvider>().initializeCart();
+    
+    // Fetch home data if needed
+    await context.read<DataProvider>().fetchHomeData();
   }
 
   @override
@@ -98,78 +98,145 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                             color: DynamicColor.white,
                           ),
                           const SizedBox(width: 5),
-                          Text(checkItemLocal != null ? '1' : '0',
-                              style: const TextStyle(
-                                  color: DynamicColor.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500)),
+                          // Use Consumer to listen to cart changes
+                          Consumer<CartProvider>(
+                            builder: (context, cartProvider, child) {
+                              return Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                    color: DynamicColor.white,
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: Center(
+                                  child: Text(
+                                    cartProvider.cartCount.toString(),
+                                    style: const TextStyle(
+                                        color: DynamicColor.primaryColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
               ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(10),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 10),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      serchBox(),
-                      const SizedBox(height: 20),
-                      Container(
-                        decoration: BoxDecoration(
-                            color: DynamicColor.white,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: TabBar(
-                            indicator: BoxDecoration(
-                                color: DynamicColor.primaryColor,
-                                borderRadius: BorderRadius.circular(10)),
-                            unselectedLabelColor: DynamicColor.primaryColor,
-                            unselectedLabelStyle: primary17w6,
-                            labelStyle: white17Bold,
-                            indicatorColor: Colors.white,
-                            labelColor: Colors.white,
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            onTap: (value) {
-                              setState(() {
-                                homeSearchTextController.text = '';
-                              });
-                            },
-                            tabs: const [
-                              Tab(
-                                text: 'Chefs',
-                              ),
-                              Tab(
-                                text: 'Grocers',
-                              )
-                            ]),
-                      )
-                    ],
-                  ),
-                ),
-              ),
             ),
           ),
-          body: const TabBarView(
-              physics: NeverScrollableScrollPhysics(),
-              children: [AllChefsList(), AllGrocerList()]),
+          body: Consumer<DataProvider>(
+            builder: (context, dataProvider, child) {
+              if (dataProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (dataProvider.error.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${dataProvider.error}'),
+                      ElevatedButton(
+                        onPressed: () => dataProvider.fetchHomeData(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  // Search bar
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: InputFieldsWithLightWhite(
+                      controller: context.read<AppProvider>().homeSearchTextController,
+                      hintText: 'Search for food...',
+                      prefixIcon: Icons.search,
+                    ),
+                  ),
+                  
+                  // Tab bar
+                  Container(
+                    color: DynamicColor.primaryColor,
+                    child: const TabBar(
+                      tabs: [
+                        Tab(text: 'Chefs'),
+                        Tab(text: 'Grocers'),
+                      ],
+                      labelColor: DynamicColor.white,
+                      unselectedLabelColor: DynamicColor.lightBlack,
+                      indicatorColor: DynamicColor.white,
+                    ),
+                  ),
+                  
+                  // Tab content
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        // Chefs tab
+                        _buildChefsList(dataProvider.chefsList),
+                        // Grocers tab
+                        _buildGrocersList(dataProvider.grocersList),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget serchBox() {
-    return InputFieldsWithLightWhiteColor(
-        controller: homeSearchTextController,
-        labelText: 'Username, Chef Name, Dish Name',
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.emailAddress,
-        style: black15bold,
-        onChanged: (value) {
-          setState(() {});
-        });
+  Widget _buildChefsList(List<dynamic> chefs) {
+    if (chefs.isEmpty) {
+      return const Center(child: Text('No chefs available'));
+    }
+    
+    return ListView.builder(
+      itemCount: chefs.length,
+      itemBuilder: (context, index) {
+        final chef = chefs[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(chef['image'] ?? ''),
+          ),
+          title: Text(chef['name'] ?? ''),
+          subtitle: Text(chef['speciality'] ?? ''),
+          onTap: () {
+            // Navigate to chef detail page
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGrocersList(List<dynamic> grocers) {
+    if (grocers.isEmpty) {
+      return const Center(child: Text('No grocers available'));
+    }
+    
+    return ListView.builder(
+      itemCount: grocers.length,
+      itemBuilder: (context, index) {
+        final grocer = grocers[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(grocer['image'] ?? ''),
+          ),
+          title: Text(grocer['name'] ?? ''),
+          subtitle: Text(grocer['store_name'] ?? ''),
+          onTap: () {
+            // Navigate to grocer detail page
+          },
+        );
+      },
+    );
   }
 }

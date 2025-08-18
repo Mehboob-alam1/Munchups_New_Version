@@ -3,13 +3,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:munchups_app/Apis/post_apis.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/backgroundWidget.dart';
 import 'package:munchups_app/Comman%20widgets/comman_button/comman_botton.dart';
 import 'package:munchups_app/Component/Strings/strings.dart';
 import 'package:munchups_app/Component/color_class/color_class.dart';
-import 'package:munchups_app/Component/global_data/global_data.dart';
+import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Component/styles/styles.dart';
 import 'package:munchups_app/Component/utils/images_urls.dart';
@@ -40,21 +39,9 @@ class _LoginPageState extends State<LoginPage> {
   String emailID = '';
   String password = '';
 
-  saveUserType(value, userTyepe, myFollowers, currency) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      prefs.setString('data', value);
-      prefs.setString("user_type", userTyepe);
-      prefs.setInt('following_count', myFollowers);
-      prefs.setString('country_symbol', currency);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: DynamicColor.white,
       body: SingleChildScrollView(
         child: BackGroundWidget(
           backgroundImage: AllImages.loginBG,
@@ -70,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: SizeConfig.getSize55(context: context)),
                   Center(
                     child: Image.asset(
-                      appLogoUrl,
+                      context.read<AppProvider>().appLogoUrl,
                       fit: BoxFit.fitHeight,
                       height: 200,
                     ),
@@ -101,21 +88,26 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.only(
           left: SizeConfig.getSize10(context: context),
           right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhiteColor(
-          labelText: TextStrings.textKey['email_add'],
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.emailAddress,
-          style: black15bold,
-          validator: (val) {
-            if (val.isEmpty) {
-              return TextStrings.textKey['field_req']!;
-            }
-          },
-          onChanged: (value) {
-            setState(() {
-              emailID = value;
-            });
-          }),
+      child: InputFieldsWithLightWhite(
+        labelText: 'Email',
+        textInputAction: TextInputAction.next,
+        keyboardType: TextInputType.emailAddress,
+        style: white15bold,
+        onChanged: (value) {
+          setState(() {
+            emailID = value;
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter email';
+          }
+          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+            return 'Please enter valid email';
+          }
+          return null;
+        },
+      ),
     );
   }
 
@@ -124,179 +116,179 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.only(
           left: SizeConfig.getSize10(context: context),
           right: SizeConfig.getSize10(context: context)),
-      child: InputFieldsWithLightWhiteColor(
-          labelText: TextStrings.textKey['password'],
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.emailAddress,
-          style: black15bold,
-          obsecureText: !passwordVisible,
-          maxLines: 1,
-          suffixIcon: IconButton(
-            icon: Icon(
-              passwordVisible ? Icons.visibility : Icons.visibility_off,
-            ),
-            onPressed: () {
-              setState(() {
-                passwordVisible = !passwordVisible;
-              });
-            },
+      child: InputFieldsWithLightWhite(
+        labelText: 'Password',
+        textInputAction: TextInputAction.done,
+        keyboardType: TextInputType.visiblePassword,
+        style: white15bold,
+        obscureText: !passwordVisible,
+        suffixIcon: IconButton(
+          icon: Icon(
+            passwordVisible ? Icons.visibility : Icons.visibility_off,
+            color: DynamicColor.white,
           ),
-          validator: (val) {
-            if (val.isEmpty) {
-              return TextStrings.textKey['field_req']!;
-            }
-          },
-          onChanged: (value) {
+          onPressed: () {
             setState(() {
-              password = value;
+              passwordVisible = !passwordVisible;
             });
-          }),
+          },
+        ),
+        onChanged: (value) {
+          setState(() {
+            password = value;
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter password';
+          }
+          if (value.length < 6) {
+            return 'Password must be at least 6 characters';
+          }
+          return null;
+        },
+      ),
     );
   }
 
   Widget rememberAndForgetPass() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Checkbox(
-                checkColor: DynamicColor.white,
-                focusColor: DynamicColor.white,
-                hoverColor: DynamicColor.white,
-                fillColor: MaterialStateProperty.all(DynamicColor.primaryColor),
-                activeColor: DynamicColor.primaryColor,
+    return Padding(
+      padding: EdgeInsets.only(
+          left: SizeConfig.getSize10(context: context),
+          right: SizeConfig.getSize10(context: context)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Checkbox(
                 value: isRemember,
                 onChanged: (value) {
                   setState(() {
-                    isRemember = value!;
+                    isRemember = value ?? false;
                   });
-                }),
-            Text(
-              TextStrings.textKey['remember']!,
-              style: white14w5,
-            ),
-          ],
-        ),
-        TextButton(
+                },
+                fillColor: MaterialStateProperty.all(DynamicColor.primaryColor),
+                checkColor: DynamicColor.white,
+              ),
+              Text('Remember me', style: white15bold),
+            ],
+          ),
+          TextButton(
             onPressed: () {
-              PageNavigateScreen().push(context, const ForgetPasswordPage());
+              PageNavigateScreen().push(context, const ForgotPassPage());
             },
-            child: Text(TextStrings.textKey['forgetPass']!, style: white14w5)),
-      ],
+            child: Text('Forgot Password?', style: white15bold),
+          ),
+        ],
+      ),
     );
   }
 
   Widget buttons() {
-    return CommanButton(
-        heroTag: 1,
-        shap: 10.0,
-        width: MediaQuery.of(context).size.width * 0.5,
-        buttonName: TextStrings.textKey['login']!.toUpperCase(),
-        onPressed: () {
-          loginApiCall(context);
-        });
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Column(
+          children: [
+            // Show error if any
+            if (authProvider.error.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  authProvider.error,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              ),
+            
+            // Login button
+            Padding(
+              padding: EdgeInsets.only(
+                  left: SizeConfig.getSize10(context: context),
+                  right: SizeConfig.getSize10(context: context)),
+              child: CommanButton(
+                text: authProvider.isLoading ? 'Logging in...' : 'Login',
+                onPressed: authProvider.isLoading ? null : _handleLogin,
+                backgroundColor: DynamicColor.primaryColor,
+                textColor: DynamicColor.white,
+              ),
+            ),
+            
+            // Show loading indicator
+            if (authProvider.isLoading)
+              const Padding(
+                padding: EdgeInsets.only(top: 16.0),
+                child: CircularProgressIndicator(),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    if (globalKey.currentState!.validate()) {
+      final authProvider = context.read<AuthProvider>();
+      
+      final success = await authProvider.login(emailID, password);
+      
+      if (success && mounted) {
+        // Navigate based on user type
+        final userType = authProvider.userType;
+        Widget nextScreen;
+        
+        switch (userType) {
+          case 'buyer':
+            nextScreen = const BuyerHomePage();
+            break;
+          case 'chef':
+            nextScreen = const ChefHomePage();
+            break;
+          case 'grocer':
+            nextScreen = const GrocerHomePage();
+            break;
+          default:
+            nextScreen = const BuyerHomePage();
+        }
+        
+        PageNavigateScreen().normalpushReplesh(context, nextScreen);
+      }
+    }
   }
 
   Widget dontAcunt() {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Text(TextStrings.textKey['dont_account']!, style: white14w5),
-      GestureDetector(
-          onTap: () {
-            addressController.text = '';
-            PageNavigateScreen().push(context, RegisterPage());
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("Don't have an account? ", style: white15bold),
+        TextButton(
+          onPressed: () {
+            PageNavigateScreen().push(context, const RegisterPage());
           },
-          child: Padding(
-            padding: const EdgeInsets.only(left: 5),
-            child: Text(TextStrings.textKey['signup']!, style: primary15w5),
-          ))
-    ]);
+          child: Text('Sign Up', style: white15bold),
+        ),
+      ],
+    );
   }
 
   Widget termsAndCondi() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GestureDetector(
-          onTap: () {
-            PageNavigateScreen().push(context, PrivacyPolicyPage());
-            // Utils.launchUrls(context, 'https://standardjcm.com/privacy.html');
+        Text('By continuing, you agree to our ', style: white15bold),
+        TextButton(
+          onPressed: () {
+            PageNavigateScreen().push(context, const TermsAndConditionPage());
           },
-          child: Text(
-            TextStrings.textKey['policy']!,
-            style: primary15boldWithUnderline,
-          ),
+          child: Text('Terms & Conditions', style: white15bold),
         ),
-        Text(
-          ' & ',
-          style: white14w5,
-        ),
-        GestureDetector(
-          onTap: () {
-            PageNavigateScreen().push(context, TermsAndConditonPage());
-            // Utils.launchUrls(
-            //     context, 'https://standardjcm.com/terms-condition.html');
+        Text(' and ', style: white15bold),
+        TextButton(
+          onPressed: () {
+            PageNavigateScreen().push(context, const PrivacyAndPolicyPage());
           },
-          child: Text(
-            TextStrings.textKey['terms&con']!,
-            style: primary15boldWithUnderline,
-          ),
+          child: Text('Privacy Policy', style: white15bold),
         ),
       ],
     );
-  }
-
-  void loginApiCall(context) async {
-    Utils().showSpinner(context);
-
-    dynamic body = {
-      'email': emailID.trim(),
-      'password': password.trim(),
-      'player_id': playerID,
-      'device_type': deviceType,
-    };
-
-    try {
-      await PostApiServer().loginApi(body).then((value) {
-        FocusScope.of(context).requestFocus(FocusNode());
-        Utils().stopSpinner(context);
-
-        if (value['success'] == 'true') {
-          saveUserType(
-              jsonEncode(value),
-              value['user_type'],
-              value['my_followers'],
-              (value['currency'] == null) ? '£' : value['currency']);
-          setState(() {
-            currencySymbol =
-                (value['currency'] == null) ? '£' : value['currency'];
-          });
-          Utils().myToast(context, msg: value['msg']);
-          if (value['user_type'] == 'buyer') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const BuyerHomePage());
-            });
-          } else if (value['user_type'] == 'chef') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const ChefHomePage());
-            });
-          } else {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const GrocerHomePage());
-            });
-          }
-        } else {
-          Utils().myToast(context, msg: value['msg']);
-        }
-      });
-    } catch (e) {
-      Utils().stopSpinner(context);
-      log(e.toString());
-    }
   }
 }

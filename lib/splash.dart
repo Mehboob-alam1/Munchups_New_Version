@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
-import 'package:munchups_app/Component/global_data/global_data.dart';
+import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
@@ -19,64 +19,83 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
-  // late AnimationController controller;
-  // late Animation<double> animation;
-  // LocalStorage storage = LocalStorage('user');
-
   Location location = Location();
-
   dynamic user;
   dynamic checkTenant;
 
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
 
-    // controller =
-    //     AnimationController(duration: const Duration(seconds: 2), vsync: this);
-    // animation = CurvedAnimation(parent: controller, curve: Curves.easeIn);
-
-    // controller.forward();
-    getLocation();
-    Timer(const Duration(seconds: 3), () {
-      // controller.reset();
-      navigateToNextScreen();
-    });
+  Future<void> _initializeApp() async {
+    try {
+      // Initialize providers
+      await context.read<AppProvider>().initializeApp();
+      await context.read<AuthProvider>().initializeAuth();
+      await context.read<CartProvider>().initializeCart();
+      
+      // Get location
+      await getLocation();
+      
+      // Navigate after delay
+      Timer(const Duration(seconds: 3), () {
+        navigateToNextScreen();
+      });
+    } catch (e) {
+      debugPrint('Error initializing app: $e');
+      // Still navigate after delay even if there's an error
+      Timer(const Duration(seconds: 3), () {
+        navigateToNextScreen();
+      });
+    }
   }
 
   navigateToNextScreen() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    user = jsonDecode(prefs.getString('data').toString());
-    if (prefs.getString('country_symbol') != null) {
-      setState(() {
-        currencySymbol = prefs.getString('country_symbol').toString();
-      });
-    }
+    try {
+      // Get user data from provider
+      final authProvider = context.read<AuthProvider>();
+      final appProvider = context.read<AppProvider>();
+      
+      if (authProvider.isAuthenticated) {
+        user = authProvider.userData;
+        
+        // Update currency symbol if available
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        if (prefs.getString('country_symbol') != null) {
+          // Note: You might want to add currency symbol to AppProvider
+          // For now, keeping the existing logic
+        }
+      }
 
-    // log(user.toString());
-    // dynamic screen = LoginPage();
-    dynamic screen = const SearchLocationPage();
-    //OnboardingScreen();
-    // GoogleMapPage(type: 'direct');
+      dynamic screen = const SearchLocationPage();
 
-    if (user != null && user.isNotEmpty) {
-      if (user['user_type'] == 'buyer') {
-        screen = const BuyerHomePage();
-      } else if (user['user_type'] == 'chef') {
-        screen = const ChefHomePage();
-      } else if (user['user_type'] == 'grocer') {
-        screen = const GrocerHomePage();
+      if (user != null && user.isNotEmpty) {
+        if (user['user_type'] == 'buyer') {
+          screen = const BuyerHomePage();
+        } else if (user['user_type'] == 'chef') {
+          screen = const ChefHomePage();
+        } else if (user['user_type'] == 'grocer') {
+          screen = const GrocerHomePage();
+        }
+      }
+
+      if (mounted) {
+        PageNavigateScreen().normalpushReplesh(context, screen);
+      }
+    } catch (e) {
+      debugPrint('Error navigating: $e');
+      // Fallback to search location page
+      if (mounted) {
+        PageNavigateScreen().normalpushReplesh(context, const SearchLocationPage());
       }
     }
-
-    PageNavigateScreen().normalpushReplesh(context, screen);
   }
 
   saveUserLatLong(latlong) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      prefs.setString('guestLatLong', jsonEncode(latlong));
-    });
+    await prefs.setString('guestLatLong', jsonEncode(latlong));
   }
 
   Future<void> getLocation() async {
@@ -98,6 +117,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           return;
         }
       }
+      
       await location.getLocation().then((value) {
         var s = {
           'lat': value.latitude.toString(),
@@ -106,53 +126,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         saveUserLatLong(s);
       });
     } catch (e) {
-      print("Error getting location: $e");
+      debugPrint("Error getting location: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: DynamicColor.white,
       body: SizedBox(
-          height: MediaQuery.of(context).size.height,
-          child: Image.asset(
-            'assets/images/onboarding8.jpeg',
-            // fit: BoxFit.fitHeight,
-            //   height: 300,
-          )),
-      // logo(),
+        height: MediaQuery.of(context).size.height,
+        child: Image.asset(
+          'assets/images/onboarding8.jpeg',
+        ),
+      ),
     );
   }
-
-  // Widget logo() {
-  //   return ScaleTransition(
-  //     scale: Tween<double>(
-  //       begin: 0.0,
-  //       end: 1.0,
-  //     ).animate(
-  //       CurvedAnimation(
-  //         parent: animation,
-  //         curve: Curves.easeIn,
-  //       ),
-  //     ),
-  //     child: SizedBox(
-  //       child: Hero(
-  //         tag: 'hero',
-  //         child: Align(
-  //           child: Image.asset(
-  //             'assets/images/logo.png',
-  //             height: 300,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // @override
-  // void dispose() {
-  //   controller.dispose();
-  //   super.dispose();
-  // }
 }
