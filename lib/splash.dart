@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:location/location.dart';
-import 'package:munchups_app/Component/providers/data_provider.dart';
-import 'package:munchups_app/Component/providers/main_provider.dart';
+import 'package:munchups_app/presentation/providers/data_provider.dart';
+import 'package:munchups_app/presentation/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
@@ -14,9 +14,9 @@ import 'package:munchups_app/Screens/search_location.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Component/providers/app_provider.dart';
-import 'Component/providers/auth_provider.dart';
-import 'Component/providers/cart_provider.dart';
+import 'presentation/providers/app_provider.dart';
+import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/cart_provider.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key? key}) : super(key: key);
@@ -29,50 +29,79 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   Location location = Location();
   dynamic user;
   dynamic checkTenant;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // Don't access providers here
   }
 
-  Future<void> _initializeApp() async {
-    try {
-      // Initialize providers
-      await context.read<AppProvider>().initializeApp();
-      await context.read<AuthProvider>().initializeAuth();
-      await context.read<CartProvider>().initializeCart();
-      await context.read<DataProvider>();
-
-    //   ChangeNotifierProvider(create: (_) => sl<AppProvider>()),
-    // ChangeNotifierProvider(create: (_) => sl<AuthProvider>()),
-    // ChangeNotifierProvider(create: (_) => sl<CartProvider>()),
-    // ChangeNotifierProvider(create: (_) => sl<DataProvider>()),
-      // Get location
-      await getLocation();
-      
-      // Navigate after delay
-      Timer(const Duration(seconds: 3), () {
-        navigateToNextScreen();
-      });
-    } catch (e) {
-      debugPrint('Error initializing app: $e');
-      // Still navigate after delay even if there's an error
-      Timer(const Duration(seconds: 3), () {
-        navigateToNextScreen();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _isInitialized = true;
+      // Use addPostFrameCallback to ensure the widget tree is fully built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeApp();
       });
     }
   }
 
+  Future<void> _initializeApp() async {
+    try {
+      debugPrint('Starting app initialization...');
+
+      // Check if providers are available (this verifies they're in the widget tree)
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+
+      debugPrint('All providers found successfully');
+
+      // Don't call initialize methods if they don't exist
+      // await appProvider.initializeApp();  // Remove this line
+      // await authProvider.initializeAuth(); // Keep this since we added it
+      // await cartProvider.initializeCart(); // Remove this line
+
+      // Just call the auth initialization
+      await authProvider.initializeApp();
+
+      // Get location
+      await getLocation();
+      debugPrint('Location obtained');
+
+      // Navigate after delay
+      Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          navigateToNextScreen();
+        }
+      });
+    } catch (e) {
+      debugPrint('Error initializing app: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
+
+      // Still navigate after delay even if there's an error
+      Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          navigateToNextScreen();
+        }
+      });
+    }
+  }
   navigateToNextScreen() async {
     try {
+      debugPrint('Starting navigation...');
+
       // Get user data from provider
-      final authProvider = context.read<AuthProvider>();
-      final appProvider = context.read<AppProvider>();
-      
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+
       if (authProvider.isAuthenticated) {
         user = authProvider.userData;
-        
+
         // Update currency symbol if available
         SharedPreferences prefs = await SharedPreferences.getInstance();
         if (prefs.getString('country_symbol') != null) {
@@ -94,6 +123,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
 
       if (mounted) {
+        debugPrint('Navigating to: ${screen.runtimeType}');
         PageNavigateScreen().normalpushReplesh(context, screen);
       }
     } catch (e) {
@@ -129,7 +159,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           return;
         }
       }
-      
+
       await location.getLocation().then((value) {
         var s = {
           'lat': value.latitude.toString(),

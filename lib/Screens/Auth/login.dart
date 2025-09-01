@@ -24,8 +24,8 @@ import 'package:munchups_app/Screens/Setting/privacy&policy.dart';
 import 'package:munchups_app/Screens/Setting/terms&con.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../Component/providers/app_provider.dart';
-import '../../Component/providers/auth_provider.dart';
+import '../../presentation/providers/app_provider.dart';
+import '../../presentation/providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,7 +37,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   GlobalKey<FormState> globalKey = GlobalKey<FormState>();
 
-
   bool isRemember = false;
   bool passwordVisible = false;
 
@@ -46,48 +45,50 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
-    final provider = context.read<AppProvider>();
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: BackGroundWidget(
-          backgroundImage: AllImages.loginBG,
-          fit: BoxFit.fill,
-          child: Form(
-            key: globalKey,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: SizeConfig.getSize15(context: context),
-              ),
-              child: Column(
-                children: [
-                  SizedBox(height: SizeConfig.getSize55(context: context)),
-                  Center(
-                    child: Image.asset(
-
-                      context.read<AppProvider>().appLogoUrl,
-                      fit: BoxFit.fitHeight,
-                      height: 200,
-                    ),
+    // Use Consumer to safely access AppProvider
+    return Consumer<AppProvider>(
+      builder: (context, appProvider, child) {
+        return Scaffold(
+          body: SingleChildScrollView(
+            child: BackGroundWidget(
+              backgroundImage: AllImages.loginBG,
+              fit: BoxFit.fill,
+              child: Form(
+                key: globalKey,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: SizeConfig.getSize15(context: context),
                   ),
-                  SizedBox(height: SizeConfig.getSize40(context: context)),
-                  emialFiled(),
-                  SizedBox(height: SizeConfig.getSize25(context: context)),
-                  passwordFiled(),
-                  SizedBox(height: SizeConfig.getSize20(context: context)),
-                  rememberAndForgetPass(),
-                  SizedBox(height: SizeConfig.getSize55(context: context)),
-                  buttons(),
-                  SizedBox(height: SizeConfig.getSize55(context: context)),
-                  dontAcunt(),
-                  SizedBox(height: SizeConfig.getSize10(context: context)),
-                  termsAndCondi()
-                ],
+                  child: Column(
+                    children: [
+                      SizedBox(height: SizeConfig.getSize55(context: context)),
+                      Center(
+                        child: Image.asset(
+                          appProvider.appLogoUrl, // Use the provider from Consumer
+                          fit: BoxFit.fitHeight,
+                          height: 200,
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.getSize40(context: context)),
+                      emialFiled(),
+                      SizedBox(height: SizeConfig.getSize25(context: context)),
+                      passwordFiled(),
+                      SizedBox(height: SizeConfig.getSize20(context: context)),
+                      rememberAndForgetPass(),
+                      SizedBox(height: SizeConfig.getSize55(context: context)),
+                      buttons(),
+                      SizedBox(height: SizeConfig.getSize55(context: context)),
+                      dontAcunt(),
+                      SizedBox(height: SizeConfig.getSize10(context: context)),
+                      termsAndCondi()
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -240,21 +241,21 @@ class _LoginPageState extends State<LoginPage> {
                   style: const TextStyle(color: Colors.red, fontSize: 14),
                 ),
               ),
-            
+
             // Login button
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: SizeConfig.getSize10(context: context)),
-                              child: CommanButton(
-                  buttonName: authProvider.isLoading ? 'Logging in...' : 'Login',
-                  onPressed: authProvider.isLoading 
+              child: CommanButton(
+                buttonName: authProvider.isLoading ? 'Logging in...' : 'Login',
+                onPressed: authProvider.isLoading
                     ? () {} // Empty function when loading
                     : () => _handleLogin(),
-                  // backgroundColor: DynamicColor.primaryColor,
-                  textColor: DynamicColor.white, shap: 12,
-                ),
+                textColor: DynamicColor.white,
+                shap: 12,
+              ),
             ),
-            
+
             // Show loading indicator
             if (authProvider.isLoading)
               const Padding(
@@ -270,14 +271,14 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleLogin() async {
     if (globalKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
-      
+
       final success = await authProvider.login(emailID, password);
-      
+
       if (success && mounted) {
         // Navigate based on user type
         final userType = authProvider.userType;
         Widget nextScreen;
-        
+
         switch (userType) {
           case 'buyer':
             nextScreen = const BuyerHomePage();
@@ -291,7 +292,7 @@ class _LoginPageState extends State<LoginPage> {
           default:
             nextScreen = const BuyerHomePage();
         }
-        
+
         PageNavigateScreen().normalpushReplesh(context, nextScreen);
       }
     }
@@ -304,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
         Text("Don't have an account? ", style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context,  RegisterPage());
+            PageNavigateScreen().push(context, RegisterPage());
           },
           child: Text('Sign Up', style: white15bold),
         ),
@@ -319,14 +320,14 @@ class _LoginPageState extends State<LoginPage> {
         Text('By continuing, you agree to our ', style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context,  TermsAndConditonPage());
+            PageNavigateScreen().push(context, TermsAndConditonPage());
           },
           child: Text('Terms & Conditions', style: white15bold),
         ),
         Text(' and ', style: white15bold),
         TextButton(
           onPressed: () {
-            PageNavigateScreen().push(context,  PrivacyPolicyPage());
+            PageNavigateScreen().push(context, PrivacyPolicyPage());
           },
           child: Text('Privacy Policy', style: white15bold),
         ),

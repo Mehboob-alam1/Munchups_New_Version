@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dartz/dartz.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/error/failures.dart';
 import '../../domain/entities/login_params.dart';
 import '../../domain/usecases/auth/login_usecase.dart';
@@ -53,7 +54,25 @@ class AuthProvider extends ChangeNotifier {
     _error = '';
     notifyListeners();
   }
+// Add this to your AppProvider class
+  Future<void> initializeApp() async {
+    try {
+      debugPrint('Initializing AppProvider...');
 
+      // Initialize any app-level configuration here
+      // For example: theme settings, app configuration, etc.
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      // Load any saved app settings
+      // Example: theme mode, language settings, etc.
+
+      debugPrint('AppProvider initialized successfully');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error initializing AppProvider: $e');
+      rethrow;
+    }
+  }
   // Login method
   Future<bool> login(String email, String password) async {
     _setLoading(true);

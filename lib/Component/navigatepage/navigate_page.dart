@@ -54,11 +54,16 @@ class PageNavigateScreen {
         MaterialPageRoute(builder: (context) => page),
         (Route<dynamic> route) => false);
   }
-
-  void normalpushReplesh(BuildContext context, Widget page) {
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => page));
+  void normalpushReplesh(BuildContext context, Widget screen) {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => screen),
+          (route) => false,
+    );
   }
+  // void normalpushReplesh(BuildContext context, Widget page) {
+  //   Navigator.pushReplacement(
+  //       context, MaterialPageRoute(builder: (context) => page));
+  // }
 
   void back(BuildContext context) {
     Navigator.of(context).pop();
