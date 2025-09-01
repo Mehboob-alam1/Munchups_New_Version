@@ -1,5 +1,4 @@
 // File: android/app/build.gradle.kts
-
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -32,9 +31,9 @@ val keyPasswordValue = keystoreProperties.getProperty("keyPassword")?.trim()
 println("🔐 Using keystore: $storeFilePath | alias: $keyAliasValue")
 
 android {
-    namespace = "com.munchups.munchups_app"
+    namespace = "com.example.munchups_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -45,7 +44,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.munchups.munchups_app"
+        applicationId = "com.example.munchups_app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -53,9 +52,9 @@ android {
         multiDexEnabled = true
     }
 
+    // ---- Signing configs must be defined BEFORE buildTypes ----
     signingConfigs {
         create("release") {
-            // Values come strictly from key.properties
             storeFile = file(storeFilePath)
             storePassword = storePasswordValue
             keyAlias = keyAliasValue
@@ -71,6 +70,7 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
+            // You can enable these later once R8 rules are sorted
             isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(
@@ -79,7 +79,7 @@ android {
             )
         }
         getByName("debug") {
-            isMinifyEnabled = false
+            // uses debug keystore automatically
         }
     }
 }

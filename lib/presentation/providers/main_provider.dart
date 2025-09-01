@@ -8,7 +8,7 @@ import 'data_provider.dart';
 
 class MainProvider extends StatelessWidget {
   final Widget child;
-  
+
   const MainProvider({
     super.key,
     required this.child,
@@ -30,13 +30,13 @@ class MainProvider extends StatelessWidget {
 
 // Extension methods for easy access to providers
 extension ProviderExtension on BuildContext {
-  AppProvider get appProvider => Provider.of<AppProvider>(this, listen: false);
+  AppProvider  get appProvider => Provider.of<AppProvider>(this, listen: false);
   AuthProvider get authProvider => Provider.of<AuthProvider>(this, listen: false);
   CartProvider get cartProvider => Provider.of<CartProvider>(this, listen: false);
   DataProvider get dataProvider => Provider.of<DataProvider>(this, listen: false);
-  
+
   // Listenable versions for UI updates
-  AppProvider get appProviderListen => Provider.of<AppProvider>(this);
+  AppProvider  get appProviderListen => Provider.of<AppProvider>(this);
   AuthProvider get authProviderListen => Provider.of<AuthProvider>(this);
   CartProvider get cartProviderListen => Provider.of<CartProvider>(this);
   DataProvider get dataProviderListen => Provider.of<DataProvider>(this);

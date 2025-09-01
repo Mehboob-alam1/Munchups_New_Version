@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:location/location.dart';
+import 'package:munchups_app/Component/providers/data_provider.dart';
 import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
@@ -41,7 +42,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       await context.read<AppProvider>().initializeApp();
       await context.read<AuthProvider>().initializeAuth();
       await context.read<CartProvider>().initializeCart();
-      
+      await context.read<DataProvider>();
+
+    //   ChangeNotifierProvider(create: (_) => sl<AppProvider>()),
+    // ChangeNotifierProvider(create: (_) => sl<AuthProvider>()),
+    // ChangeNotifierProvider(create: (_) => sl<CartProvider>()),
+    // ChangeNotifierProvider(create: (_) => sl<DataProvider>()),
       // Get location
       await getLocation();
       

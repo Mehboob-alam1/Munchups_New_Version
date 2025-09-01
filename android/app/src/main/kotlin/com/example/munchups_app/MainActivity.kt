@@ -1,4 +1,4 @@
-package com.Munchups.munchups_app
+package com.example.munchups_app
 
 import io.flutter.embedding.android.FlutterActivity
 

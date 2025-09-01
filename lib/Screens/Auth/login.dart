@@ -37,6 +37,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   GlobalKey<FormState> globalKey = GlobalKey<FormState>();
 
+
   bool isRemember = false;
   bool passwordVisible = false;
 
@@ -45,6 +46,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final provider = context.read<AppProvider>();
     return Scaffold(
       body: SingleChildScrollView(
         child: BackGroundWidget(
@@ -61,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: SizeConfig.getSize55(context: context)),
                   Center(
                     child: Image.asset(
+
                       context.read<AppProvider>().appLogoUrl,
                       fit: BoxFit.fitHeight,
                       height: 200,

@@ -33,13 +33,18 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    //_initializeData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartProvider>().initializeCart();
+      context.read<DataProvider>().fetchHomeData();
+    });
   }
 
   Future<void> _initializeData() async {
     // Initialize cart data
     await context.read<CartProvider>().initializeCart();
-    
+
     // Fetch home data if needed
     await context.read<DataProvider>().fetchHomeData();
   }
