@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../presentation/providers/data_provider.dart';
 import 'app_provider.dart';
 import 'auth_provider.dart';
 import 'cart_provider.dart';
