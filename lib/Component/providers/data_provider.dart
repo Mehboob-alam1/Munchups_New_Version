@@ -11,19 +11,19 @@ import '../../domain/usecases/data/fetch_notifications_usecase.dart';
 class DataProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _error = '';
-  
+
   // Home data
   List<dynamic> _homeData = [];
   List<dynamic> _chefsList = [];
   List<dynamic> _grocersList = [];
-  
+
   // Search data
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
-  
+
   // Profile data
   Map<String, dynamic> _userProfile = {};
-  
+
   // Notifications
   List<dynamic> _notifications = [];
   int _unreadCount = 0;
@@ -75,15 +75,15 @@ class DataProvider extends ChangeNotifier {
   Future<void> fetchHomeData() async {
     _setLoading(true);
     _setError('');
-    
+
     try {
       // Get user data and location from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userDataString = prefs.getString('data');
       String? latlongString = prefs.getString('guestLatLong');
-      
+
       Map<String, dynamic>? params;
-      
+
       if (userDataString != null) {
         // User is logged in
         Map<String, dynamic> userData = jsonDecode(userDataString);
@@ -102,14 +102,14 @@ class DataProvider extends ChangeNotifier {
       } else {
         throw Exception('No user data or location available');
       }
-      
+
       final result = await fetchHomeDataUseCase(params);
-      
+
       result.fold(
-        (failure) {
+            (failure) {
           _setError(failure.message);
         },
-        (success) {
+            (success) {
           _homeData = success['data'] ?? [];
           _chefsList = success['chefs'] ?? [];
           _grocersList = success['grocers'] ?? [];
@@ -127,26 +127,26 @@ class DataProvider extends ChangeNotifier {
   Future<void> fetchUserProfile() async {
     _setLoading(true);
     _setError('');
-    
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userDataString = prefs.getString('data');
-      
+
       if (userDataString != null) {
         Map<String, dynamic> userData = jsonDecode(userDataString);
         String userId = userData['user_id'].toString();
         String userType = userData['user_type'].toString();
-        
+
         final result = await fetchUserProfileUseCase({
           'userId': userId,
           'userType': userType,
         });
-        
+
         result.fold(
-          (failure) {
+              (failure) {
             _setError(failure.message);
           },
-          (success) {
+              (success) {
             _userProfile = success;
           },
         );
@@ -166,24 +166,24 @@ class DataProvider extends ChangeNotifier {
     _setLoading(true);
     _setError('');
     _searchQuery = query;
-    
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userDataString = prefs.getString('data');
-      String? userId = userDataString != null 
-          ? jsonDecode(userDataString)['user_id'].toString() 
+      String? userId = userDataString != null
+          ? jsonDecode(userDataString)['user_id'].toString()
           : null;
-      
+
       final result = await searchUsersUseCase({
         'query': query,
         'userId': userId,
       });
-      
+
       result.fold(
-        (failure) {
+            (failure) {
           _setError(failure.message);
         },
-        (success) {
+            (success) {
           _searchResults = success;
         },
       );
@@ -199,22 +199,22 @@ class DataProvider extends ChangeNotifier {
   Future<void> fetchNotifications() async {
     _setLoading(true);
     _setError('');
-    
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userDataString = prefs.getString('data');
-      
+
       if (userDataString != null) {
         Map<String, dynamic> userData = jsonDecode(userDataString);
         String userId = userData['user_id'].toString();
-        
+
         final result = await fetchNotificationsUseCase(userId);
-        
+
         result.fold(
-          (failure) {
+              (failure) {
             _setError(failure.message);
           },
-          (success) {
+              (success) {
             _notifications = success;
             _unreadCount = _notifications.where((n) => n['is_read'] != '1').length;
           },
