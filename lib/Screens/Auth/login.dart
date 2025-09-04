@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
           hintText: 'Email',
           hintStyle: white15bold,
           filled: true,
-          fillColor: DynamicColor.white,
+          // fillColor: DynamicColor.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: DynamicColor.lightBlack),
@@ -150,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
           hintText: 'Password',
           hintStyle: white15bold,
           filled: true,
-          fillColor: DynamicColor.white,
+          // fillColor: DynamicColor.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: DynamicColor.lightBlack),

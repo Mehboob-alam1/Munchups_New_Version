@@ -67,22 +67,43 @@ class _BackIconCustomAppBarState extends State<BackIconCustomAppBar> {
           padding: const EdgeInsets.only(right: 15),
           child: InkWell(
             onTap: () {
+              // if (getUserType == 'buyer') {
+              //   Timer(const Duration(milliseconds: 600), () {
+              //     PageNavigateScreen()
+              //         .pushReplesh(context, const BuyerHomePage());
+              //   });
+              // } else if (getUserType == 'chef') {
+              //   Timer(const Duration(milliseconds: 600), () {
+              //     PageNavigateScreen()
+              //         .pushReplesh(context, const ChefHomePage());
+              //   });
+              // } else {
+              //   Timer(const Duration(milliseconds: 600), () {
+              //     PageNavigateScreen()
+              //         .pushReplesh(context, const GrocerHomePage());
+              //   });
+              // }
+
               if (getUserType == 'buyer') {
-                Timer(const Duration(milliseconds: 600), () {
-                  PageNavigateScreen()
-                      .pushRemovUntil(context, const BuyerHomePage());
-                });
-              } else if (getUserType == 'chef') {
-                Timer(const Duration(milliseconds: 600), () {
-                  PageNavigateScreen()
-                      .pushRemovUntil(context, const ChefHomePage());
-                });
-              } else {
-                Timer(const Duration(milliseconds: 600), () {
-                  PageNavigateScreen()
-                      .pushRemovUntil(context, const GrocerHomePage());
-                });
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BuyerHomePage()),
+                );
               }
+
+              if (getUserType == 'buyer') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BuyerHomePage()),
+                );
+                // PageNavigateScreen().pushReplesh(context, const BuyerHomePage());
+              } else if (getUserType == 'chef') {
+                PageNavigateScreen().pushReplesh(context, const ChefHomePage());
+              } else {
+                PageNavigateScreen().pushReplesh(context, const GrocerHomePage());
+              }
+
+
             },
             child: const Icon(
               Icons.home,

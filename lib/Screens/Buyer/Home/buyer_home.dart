@@ -1,23 +1,18 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
-import 'package:munchups_app/Comman%20widgets/exit_page.dart';
-import 'package:munchups_app/Component/Strings/strings.dart';
-import 'package:munchups_app/Component/color_class/color_class.dart';
-import 'package:munchups_app/Component/providers/main_provider.dart';
-import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
-import 'package:munchups_app/Component/styles/styles.dart';
-import 'package:munchups_app/Screens/Buyer/Cart/card_list.dart';
-import 'package:munchups_app/Screens/Buyer/Chefs/all_chefs_list.dart';
-import 'package:munchups_app/Screens/Buyer/Grocers/all_grocer_list.dart';
-import 'package:munchups_app/Screens/drawer.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../../Component/providers/app_provider.dart';
 import '../../../Component/providers/cart_provider.dart';
 import '../../../Component/providers/data_provider.dart';
+import '../../../Comman widgets/Input Fields/input_fields_with_lightwhite.dart';
+import '../../../Comman widgets/exit_page.dart';
+import '../../../Component/Strings/strings.dart';
+import '../../../Component/color_class/color_class.dart';
+import '../../../Component/navigatepage/navigate_page.dart';
+import '../../../Component/styles/styles.dart';
+import '../../drawer.dart';
+import '../Cart/card_list.dart';
+import '../Chefs/all_chefs_list.dart';
+import '../Grocers/all_grocer_list.dart';
 
 class BuyerHomePage extends StatefulWidget {
   const BuyerHomePage({super.key});
@@ -28,25 +23,16 @@ class BuyerHomePage extends StatefulWidget {
 
 class _BuyerHomePageState extends State<BuyerHomePage> {
   final GlobalKey<ScaffoldState> globalKey = GlobalKey();
-  int changeImage = 0;
 
   @override
   void initState() {
     super.initState();
-    //_initializeData();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CartProvider>().initializeCart();
-      context.read<DataProvider>().fetchHomeData();
+    Future.microtask(() {
+      final cartProvider = context.read<CartProvider>();
+      final dataProvider = context.read<DataProvider>();
+      cartProvider.initializeCart();
+      dataProvider.fetchHomeData();
     });
-  }
-
-  Future<void> _initializeData() async {
-    // Initialize cart data
-    await context.read<CartProvider>().initializeCart();
-
-    // Fetch home data if needed
-    await context.read<DataProvider>().fetchHomeData();
   }
 
   @override
@@ -58,8 +44,9 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           key: globalKey,
           drawerEnableOpenDragGesture: false,
           drawer: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.65,
-              child: const DrawerPage()),
+            width: MediaQuery.of(context).size.width * 0.65,
+            child: const DrawerPage(),
+          ),
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(185),
             child: AppBar(
@@ -68,11 +55,10 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
               foregroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
               leading: InkWell(
-                  onTap: () {
-                    globalKey.currentState!.openDrawer();
-                  },
-                  child: const Icon(Icons.menu,
-                      color: DynamicColor.white, size: 35)),
+                onTap: () => globalKey.currentState!.openDrawer(),
+                child: const Icon(Icons.menu,
+                    color: DynamicColor.white, size: 35),
+              ),
               title: Text(TextStrings.textKey['home']!, style: primary25bold),
               centerTitle: true,
               actions: [
@@ -80,50 +66,48 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                   padding: const EdgeInsets.only(top: 15, bottom: 5, right: 10),
                   child: InkWell(
                     onTap: () {
+
                       PageNavigateScreen().push(context, const CartListPage());
                     },
                     child: Container(
                       height: 25,
-                      padding: const EdgeInsets.only(left: 8, right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                          color: DynamicColor.primaryColor,
-                          borderRadius: BorderRadius.circular(8)),
+                        color: DynamicColor.primaryColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Icon(Icons.shopping_cart,
                               color: DynamicColor.white, size: 12),
                           const SizedBox(width: 2),
-                          const Text('Cart',
-                              style: TextStyle(
-                                  color: DynamicColor.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500)),
-                          const SizedBox(width: 2),
-                          Container(
-                            width: 1,
-                            height: 12,
-                            color: DynamicColor.white,
+                          const Text(
+                            'Cart',
+                            style: TextStyle(
+                              color: DynamicColor.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           const SizedBox(width: 5),
-                          // Use Consumer to listen to cart changes
                           Consumer<CartProvider>(
                             builder: (context, cartProvider, child) {
                               return Container(
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                    color: DynamicColor.white,
-                                    borderRadius: BorderRadius.circular(8)),
+                                  color: DynamicColor.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Center(
                                   child: Text(
                                     cartProvider.cartCount.toString(),
                                     style: const TextStyle(
-                                        color: DynamicColor.primaryColor,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold),
+                                      color: DynamicColor.primaryColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               );
@@ -142,7 +126,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
               if (dataProvider.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (dataProvider.error.isNotEmpty) {
                 return Center(
                   child: Column(
@@ -160,19 +144,16 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
 
               return Column(
                 children: [
-                  // Search bar
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: InputFieldsWithLightWhiteColor(
-                      controller: context.read<AppProvider>().homeSearchTextController,
+                      controller:
+                      context.read<AppProvider>().homeSearchTextController,
                       labelText: 'Search for food...',
-                      prefixIcon: Icons.search, onChanged: (String value) {
-
-                    },
+                      prefixIcon: Icons.search,
+                      onChanged: (value) {},
                     ),
                   ),
-                  
-                  // Tab bar
                   Container(
                     color: DynamicColor.primaryColor,
                     child: const TabBar(
@@ -185,14 +166,10 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                       indicatorColor: DynamicColor.white,
                     ),
                   ),
-                  
-                  // Tab content
                   Expanded(
                     child: TabBarView(
                       children: [
-                        // Chefs tab
                         _buildChefsList(dataProvider.chefsList),
-                        // Grocers tab
                         _buildGrocersList(dataProvider.grocersList),
                       ],
                     ),
@@ -210,7 +187,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     if (chefs.isEmpty) {
       return const Center(child: Text('No chefs available'));
     }
-    
+
     return ListView.builder(
       itemCount: chefs.length,
       itemBuilder: (context, index) {
@@ -222,7 +199,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           title: Text(chef['name'] ?? ''),
           subtitle: Text(chef['speciality'] ?? ''),
           onTap: () {
-            // Navigate to chef detail page
+            // TODO: navigate to chef detail
           },
         );
       },
@@ -233,7 +210,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     if (grocers.isEmpty) {
       return const Center(child: Text('No grocers available'));
     }
-    
+
     return ListView.builder(
       itemCount: grocers.length,
       itemBuilder: (context, index) {
@@ -245,7 +222,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           title: Text(grocer['name'] ?? ''),
           subtitle: Text(grocer['store_name'] ?? ''),
           onTap: () {
-            // Navigate to grocer detail page
+            // TODO: navigate to grocer detail
           },
         );
       },

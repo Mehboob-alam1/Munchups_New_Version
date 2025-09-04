@@ -51,7 +51,23 @@ void main() async {
     log('❌ Error initializing Stripe: $e');
   }
 
-  runApp(const MyApp());
+  runApp(
+
+    MultiProvider(
+
+     providers: [
+
+         ChangeNotifierProvider(create: (_) => di.sl<AppProvider>()),
+         ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
+         ChangeNotifierProvider(create: (_) => di.sl<CartProvider>()),
+         ChangeNotifierProvider(create: (_) => di.sl<DataProvider>()),
+
+     ],
+        child: const MyApp()
+    )
+
+  );
+
 }
 
 class MyApp extends StatelessWidget {
@@ -61,77 +77,21 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     log('🏗️ Building MyApp widget...');
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AppProvider>(
-          create: (context) {
-            log('📦 Creating AppProvider...');
-            try {
-              final provider = di.sl<AppProvider>();
-              log('✅ AppProvider created successfully');
-              return provider;
-            } catch (e) {
-              log('❌ Error creating AppProvider: $e');
-              rethrow;
-            }
-          },
-        ),
-        ChangeNotifierProvider<AuthProvider>(
-          create: (context) {
-            log('📦 Creating AuthProvider...');
-            try {
-              final provider = di.sl<AuthProvider>();
-              log('✅ AuthProvider created successfully');
-              return provider;
-            } catch (e) {
-              log('❌ Error creating AuthProvider: $e');
-              rethrow;
-            }
-          },
-        ),
-        ChangeNotifierProvider<CartProvider>(
-          create: (context) {
-            log('📦 Creating CartProvider...');
-            try {
-              final provider = di.sl<CartProvider>();
-              log('✅ CartProvider created successfully');
-              return provider;
-            } catch (e) {
-              log('❌ Error creating CartProvider: $e');
-              rethrow;
-            }
-          },
-        ),
-        ChangeNotifierProvider<DataProvider>(
-          create: (context) {
-            log('📦 Creating DataProvider...');
-            try {
-              final provider = di.sl<DataProvider>();
-              log('✅ DataProvider created successfully');
-              return provider;
-            } catch (e) {
-              log('❌ Error creating DataProvider: $e');
-              rethrow;
-            }
-          },
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Munchups',
-        darkTheme: ThemeData(
-          useMaterial3: false,
-          brightness: Brightness.dark,
-          primaryColor: const Color(0xff272A3D),
-          primaryColorDark: const Color(0xff272A3D),
-          scaffoldBackgroundColor: const Color(0xff272A3D),
-          bottomSheetTheme: const BottomSheetThemeData(
-              surfaceTintColor: Color(0xff272A3D),
-              backgroundColor: Color(0xff272A3D)),
-        ),
-        themeMode: ThemeMode.dark,
-        home: const SplashPage(),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Munchups',
+      darkTheme: ThemeData(
+        useMaterial3: false,
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xff272A3D),
+        primaryColorDark: const Color(0xff272A3D),
+        scaffoldBackgroundColor: const Color(0xff272A3D),
+        bottomSheetTheme: const BottomSheetThemeData(
+            surfaceTintColor: Color(0xff272A3D),
+            backgroundColor: Color(0xff272A3D)),
       ),
+      themeMode: ThemeMode.dark,
+      home: const SplashPage(),
     );
   }
 }
