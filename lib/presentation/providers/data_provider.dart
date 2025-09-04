@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/error/failures.dart';
 import '../../domain/usecases/data/fetch_home_data_usecase.dart';
 import '../../domain/usecases/data/fetch_user_profile_usecase.dart';
@@ -75,7 +77,33 @@ class DataProvider extends ChangeNotifier {
     _setError('');
     
     try {
-      final result = await fetchHomeDataUseCase(null);
+      // Get user data and location from SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userDataString = prefs.getString('data');
+      String? latlongString = prefs.getString('guestLatLong');
+      
+      Map<String, dynamic>? params;
+      
+      if (userDataString != null) {
+        // User is logged in
+        Map<String, dynamic> userData = jsonDecode(userDataString);
+        params = {
+          'userId': userData['user_id'].toString(),
+        };
+      } else if (latlongString != null) {
+        // Guest user with location
+        Map<String, dynamic> latlong = jsonDecode(latlongString);
+        params = {
+          'location': {
+            'lat': latlong['lat'].toString(),
+            'long': latlong['long'].toString(),
+          },
+        };
+      } else {
+        throw Exception('No user data or location available');
+      }
+      
+      final result = await fetchHomeDataUseCase(params);
       
       result.fold(
         (failure) {
