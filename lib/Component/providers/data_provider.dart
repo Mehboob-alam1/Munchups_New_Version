@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:dartz/dartz.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/utils.dart';
+import '../../core/error/failures.dart';
+import '../../domain/usecases/data/fetch_home_data_usecase.dart';
+import '../../domain/usecases/data/fetch_user_profile_usecase.dart';
+import '../../domain/usecases/data/search_users_usecase.dart';
+import '../../domain/usecases/data/fetch_notifications_usecase.dart';
 
 class DataProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -23,6 +27,19 @@ class DataProvider extends ChangeNotifier {
   // Notifications
   List<dynamic> _notifications = [];
   int _unreadCount = 0;
+
+  // Use Cases
+  final FetchHomeDataUseCase fetchHomeDataUseCase;
+  final FetchUserProfileUseCase fetchUserProfileUseCase;
+  final SearchUsersUseCase searchUsersUseCase;
+  final FetchNotificationsUseCase fetchNotificationsUseCase;
+
+  DataProvider({
+    required this.fetchHomeDataUseCase,
+    required this.fetchUserProfileUseCase,
+    required this.searchUsersUseCase,
+    required this.fetchNotificationsUseCase,
+  });
 
   // Getters
   bool get isLoading => _isLoading;
@@ -60,36 +77,44 @@ class DataProvider extends ChangeNotifier {
     _setError('');
     
     try {
+      // Get user data and location from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userData = prefs.getString('data');
-      var latlong = prefs.getString('guestLatLong');
-
-      String url = '';
-      if (userData != null) {
-        var userDataMap = jsonDecode(userData);
-        url = Utils.baseUrl() +
-            'getall_chef_or_grocer_with_detail.php/?user_id=' +
-            userDataMap['user_id'].toString();
-      } else if (latlong != null) {
-        var latlongMap = jsonDecode(latlong);
-        url = Utils.baseUrl() +
-            'getall_chef_or_grocer_with_detail.php/?latitude=${latlongMap['lat'].toString()}&longitude=${latlongMap['long'].toString()}';
+      String? userDataString = prefs.getString('data');
+      String? latlongString = prefs.getString('guestLatLong');
+      
+      Map<String, dynamic>? params;
+      
+      if (userDataString != null) {
+        // User is logged in
+        Map<String, dynamic> userData = jsonDecode(userDataString);
+        params = {
+          'userId': userData['user_id'].toString(),
+        };
+      } else if (latlongString != null) {
+        // Guest user with location
+        Map<String, dynamic> latlong = jsonDecode(latlongString);
+        params = {
+          'location': {
+            'lat': latlong['lat'].toString(),
+            'long': latlong['long'].toString(),
+          },
+        };
       } else {
-        throw Exception('No location data available');
+        throw Exception('No user data or location available');
       }
-
-      final response = await http.get(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
-      });
-
-      if (response.statusCode == 200) {
-        dynamic data = jsonDecode(response.body);
-        _homeData = data['data'] ?? [];
-        _chefsList = data['chefs'] ?? [];
-        _grocersList = data['grocers'] ?? [];
-      } else {
-        throw Exception('Failed to load home data');
-      }
+      
+      final result = await fetchHomeDataUseCase(params);
+      
+      result.fold(
+        (failure) {
+          _setError(failure.message);
+        },
+        (success) {
+          _homeData = success['data'] ?? [];
+          _chefsList = success['chefs'] ?? [];
+          _grocersList = success['grocers'] ?? [];
+        },
+      );
     } catch (e) {
       _setError(e.toString());
       debugPrint('Error fetching home data: $e');
@@ -105,26 +130,28 @@ class DataProvider extends ChangeNotifier {
     
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userData = prefs.getString('data');
-      String? getUserType = prefs.getString('user_type');
+      String? userDataString = prefs.getString('data');
       
-      if (userData == null || getUserType == null) {
-        throw Exception('User not authenticated');
-      }
-
-      var userDataMap = jsonDecode(userData);
-      String url = Utils.baseUrl() +
-          'get_profile.php?user_id=${userDataMap['user_id'].toString()}&user_type=$getUserType';
-      
-      final response = await http.get(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
-      });
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        _userProfile = data['data'] ?? {};
+      if (userDataString != null) {
+        Map<String, dynamic> userData = jsonDecode(userDataString);
+        String userId = userData['user_id'].toString();
+        String userType = userData['user_type'].toString();
+        
+        final result = await fetchUserProfileUseCase({
+          'userId': userId,
+          'userType': userType,
+        });
+        
+        result.fold(
+          (failure) {
+            _setError(failure.message);
+          },
+          (success) {
+            _userProfile = success;
+          },
+        );
       } else {
-        throw Exception('Failed to load profile');
+        throw Exception('No user data available');
       }
     } catch (e) {
       _setError(e.toString());
@@ -141,30 +168,25 @@ class DataProvider extends ChangeNotifier {
     _searchQuery = query;
     
     try {
-      if (query.isEmpty) {
-        _searchResults = [];
-        return;
-      }
-
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userData = prefs.getString('data');
+      String? userDataString = prefs.getString('data');
+      String? userId = userDataString != null 
+          ? jsonDecode(userDataString)['user_id'].toString() 
+          : null;
       
-      String url = Utils.baseUrl() + 'search_users.php?query=$query';
-      if (userData != null) {
-        var userDataMap = jsonDecode(userData);
-        url += '&user_id=${userDataMap['user_id']}';
-      }
-
-      final response = await http.get(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
+      final result = await searchUsersUseCase({
+        'query': query,
+        'userId': userId,
       });
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        _searchResults = data['data'] ?? [];
-      } else {
-        throw Exception('Search failed');
-      }
+      
+      result.fold(
+        (failure) {
+          _setError(failure.message);
+        },
+        (success) {
+          _searchResults = success;
+        },
+      );
     } catch (e) {
       _setError(e.toString());
       debugPrint('Error searching users: $e');
@@ -180,26 +202,25 @@ class DataProvider extends ChangeNotifier {
     
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userData = prefs.getString('data');
+      String? userDataString = prefs.getString('data');
       
-      if (userData == null) {
-        throw Exception('User not authenticated');
-      }
-
-      var userDataMap = jsonDecode(userData);
-      String url = Utils.baseUrl() +
-          'get_notifications.php?user_id=${userDataMap['user_id']}';
-
-      final response = await http.get(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
-      });
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        _notifications = data['data'] ?? [];
-        _unreadCount = data['unread_count'] ?? 0;
+      if (userDataString != null) {
+        Map<String, dynamic> userData = jsonDecode(userDataString);
+        String userId = userData['user_id'].toString();
+        
+        final result = await fetchNotificationsUseCase(userId);
+        
+        result.fold(
+          (failure) {
+            _setError(failure.message);
+          },
+          (success) {
+            _notifications = success;
+            _unreadCount = _notifications.where((n) => n['is_read'] != '1').length;
+          },
+        );
       } else {
-        throw Exception('Failed to load notifications');
+        throw Exception('No user data available');
       }
     } catch (e) {
       _setError(e.toString());
@@ -209,34 +230,10 @@ class DataProvider extends ChangeNotifier {
     }
   }
 
-  // Mark notification as read
-  Future<void> markNotificationAsRead(String notificationId) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userData = prefs.getString('data');
-      
-      if (userData == null) return;
-
-      var userDataMap = jsonDecode(userData);
-      String url = Utils.baseUrl() +
-          'mark_notification_read.php?notification_id=$notificationId&user_id=${userDataMap['user_id']}';
-
-      await http.post(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
-      });
-
-      // Update local state
-      await fetchNotifications();
-    } catch (e) {
-      debugPrint('Error marking notification as read: $e');
-    }
-  }
-
-  // Refresh all data
-  Future<void> refreshAllData() async {
+  // Initialize all data
+  Future<void> initializeData() async {
     await Future.wait([
       fetchHomeData(),
-      fetchUserProfile(),
       fetchNotifications(),
     ]);
   }

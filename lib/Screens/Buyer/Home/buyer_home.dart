@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../Component/providers/app_provider.dart';
-import '../../../Component/providers/cart_provider.dart';
-import '../../../Component/providers/data_provider.dart';
+import '../../../presentation/providers/app_provider.dart';
+import '../../../presentation/providers/cart_provider.dart';
+import '../../../presentation/providers/data_provider.dart';
 import '../../../Comman widgets/Input Fields/input_fields_with_lightwhite.dart';
 import '../../../Comman widgets/exit_page.dart';
 import '../../../Component/Strings/strings.dart';
