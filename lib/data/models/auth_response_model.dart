@@ -22,8 +22,27 @@ class AuthResponseModel {
     this.currency,
   });
 
-  factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
-      _$AuthResponseModelFromJson(json);
+  factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
+    // Handle myFollowers conversion safely to prevent "string is not subtype of int" error
+    int? myFollowers;
+    if (json['myFollowers'] != null) {
+      if (json['myFollowers'] is String) {
+        myFollowers = int.tryParse(json['myFollowers']);
+      } else if (json['myFollowers'] is num) {
+        myFollowers = json['myFollowers'].toInt();
+      }
+    }
+
+    return AuthResponseModel(
+      status: json['status'] as String,
+      message: json['message'] as String,
+      data: json['data'] as Map<String, dynamic>?,
+      userType: json['userType'] as String?,
+      token: json['token'] as String?,
+      myFollowers: myFollowers,
+      currency: json['currency'] as String?,
+    );
+  }
 
   Map<String, dynamic> toJson() => _$AuthResponseModelToJson(this);
 }
