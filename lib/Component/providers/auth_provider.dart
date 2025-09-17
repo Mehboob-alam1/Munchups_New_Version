@@ -77,39 +77,34 @@ class AuthProvider extends ChangeNotifier {
     try {
       String url = Utils.baseUrl() + 'login.php';
       
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        
-        if (data['status'] == 'success') {
-          // Safely handle the data field - it might be a Map or List
-          Map<String, dynamic> userData = {};
-          if (data['data'] is Map<String, dynamic>) {
-            userData = data['data'];
-          } else if (data['data'] is Map) {
-            userData = Map<String, dynamic>.from(data['data']);
-          }
-          
-          await _saveUserSession(
-            userData, 
-            data['user_type']?.toString() ?? '', 
-            data['token']?.toString() ?? ''
-          );
-          return true;
-        } else {
-          _setError(data['message']?.toString() ?? 'Login failed');
-          return false;
+      // Use MultipartRequest instead of http.post for form data
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll({
+        'email': email,
+        'password': password,
+      });
+      
+      var res = await request.send();
+      var response = await res.stream.bytesToString();
+      var data = jsonDecode(response);
+      
+      if (data['success'] == 'true' || data['status'] == 'success') {
+        // Safely handle the data field - it might be a Map or List
+        Map<String, dynamic> userData = {};
+        if (data['data'] is Map<String, dynamic>) {
+          userData = data['data'];
+        } else if (data['data'] is Map) {
+          userData = Map<String, dynamic>.from(data['data']);
         }
+        
+        await _saveUserSession(
+          userData, 
+          data['user_type']?.toString() ?? '', 
+          data['token']?.toString() ?? ''
+        );
+        return true;
       } else {
-        _setError('Network error occurred');
+        _setError(data['msg']?.toString() ?? data['message']?.toString() ?? 'Login failed');
         return false;
       }
     } catch (e) {
@@ -129,36 +124,31 @@ class AuthProvider extends ChangeNotifier {
     try {
       String url = Utils.baseUrl() + 'register.php';
       
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
-      );
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        
-        if (data['status'] == 'success') {
-          // Safely handle the data field - it might be a Map or List
-          Map<String, dynamic> userData = {};
-          if (data['data'] is Map<String, dynamic>) {
-            userData = data['data'];
-          } else if (data['data'] is Map) {
-            userData = Map<String, dynamic>.from(data['data']);
-          }
-          
-          await _saveUserSession(
-            userData, 
-            data['user_type']?.toString() ?? '', 
-            data['token']?.toString() ?? ''
-          );
-          return true;
-        } else {
-          _setError(data['message']?.toString() ?? 'Registration failed');
-          return false;
+      // Use MultipartRequest instead of http.post for form data
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll(userData);
+      
+      var res = await request.send();
+      var response = await res.stream.bytesToString();
+      var data = jsonDecode(response);
+      
+      if (data['success'] == 'true' || data['status'] == 'success') {
+        // Safely handle the data field - it might be a Map or List
+        Map<String, dynamic> userData = {};
+        if (data['data'] is Map<String, dynamic>) {
+          userData = data['data'];
+        } else if (data['data'] is Map) {
+          userData = Map<String, dynamic>.from(data['data']);
         }
+        
+        await _saveUserSession(
+          userData, 
+          data['user_type']?.toString() ?? '', 
+          data['token']?.toString() ?? ''
+        );
+        return true;
       } else {
-        _setError('Network error occurred');
+        _setError(data['msg']?.toString() ?? data['message']?.toString() ?? 'Registration failed');
         return false;
       }
     } catch (e) {
