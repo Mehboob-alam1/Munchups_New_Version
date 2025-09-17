@@ -2,7 +2,6 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'auth_response_model.g.dart';
 
-@JsonSerializable()
 class AuthResponseModel {
   final String status;
   final String message;
@@ -34,15 +33,23 @@ class AuthResponseModel {
     }
 
     return AuthResponseModel(
-      status: json['status'] as String,
-      message: json['message'] as String,
+      status: json['status']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
       data: json['data'] as Map<String, dynamic>?,
-      userType: json['userType'] as String?,
-      token: json['token'] as String?,
+      userType: json['userType']?.toString(),
+      token: json['token']?.toString(),
       myFollowers: myFollowers,
-      currency: json['currency'] as String?,
+      currency: json['currency']?.toString(),
     );
   }
 
-  Map<String, dynamic> toJson() => _$AuthResponseModelToJson(this);
+  Map<String, dynamic> toJson() => {
+    'status': status,
+    'message': message,
+    'data': data,
+    'userType': userType,
+    'token': token,
+    'myFollowers': myFollowers,
+    'currency': currency,
+  };
 }

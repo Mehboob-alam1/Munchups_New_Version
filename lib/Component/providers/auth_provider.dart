@@ -90,10 +90,22 @@ class AuthProvider extends ChangeNotifier {
         var data = jsonDecode(response.body);
         
         if (data['status'] == 'success') {
-          await _saveUserSession(data['data'], data['user_type'], data['token'] ?? '');
+          // Safely handle the data field - it might be a Map or List
+          Map<String, dynamic> userData = {};
+          if (data['data'] is Map<String, dynamic>) {
+            userData = data['data'];
+          } else if (data['data'] is Map) {
+            userData = Map<String, dynamic>.from(data['data']);
+          }
+          
+          await _saveUserSession(
+            userData, 
+            data['user_type']?.toString() ?? '', 
+            data['token']?.toString() ?? ''
+          );
           return true;
         } else {
-          _setError(data['message'] ?? 'Login failed');
+          _setError(data['message']?.toString() ?? 'Login failed');
           return false;
         }
       } else {
@@ -127,10 +139,22 @@ class AuthProvider extends ChangeNotifier {
         var data = jsonDecode(response.body);
         
         if (data['status'] == 'success') {
-          await _saveUserSession(data['data'], data['user_type'], data['token'] ?? '');
+          // Safely handle the data field - it might be a Map or List
+          Map<String, dynamic> userData = {};
+          if (data['data'] is Map<String, dynamic>) {
+            userData = data['data'];
+          } else if (data['data'] is Map) {
+            userData = Map<String, dynamic>.from(data['data']);
+          }
+          
+          await _saveUserSession(
+            userData, 
+            data['user_type']?.toString() ?? '', 
+            data['token']?.toString() ?? ''
+          );
           return true;
         } else {
-          _setError(data['message'] ?? 'Registration failed');
+          _setError(data['message']?.toString() ?? 'Registration failed');
           return false;
         }
       } else {
