@@ -126,7 +126,10 @@ class AuthProvider extends ChangeNotifier {
       
       // Use MultipartRequest instead of http.post for form data
       final request = http.MultipartRequest('POST', Uri.parse(url));
-      request.fields.addAll(userData);
+      
+      // Convert Map<String, dynamic> to Map<String, String>
+      Map<String, String> formData = userData.map((key, value) => MapEntry(key, value.toString()));
+      request.fields.addAll(formData);
       
       var res = await request.send();
       var response = await res.stream.bytesToString();
