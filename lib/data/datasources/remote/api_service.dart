@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:convert'; // Added for jsonDecode
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../models/auth_response_model.dart';
@@ -67,10 +68,29 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       final response = await dio.post(
         'login.php',
         data: formData,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
       );
       
+      print('Raw response data: ${response.data}');
+      print('Response data type: ${response.data.runtimeType}');
+      
       if (response.statusCode == 200) {
-        final data = response.data;
+        dynamic data = response.data;
+        
+        // Handle case where response might be a string that needs to be parsed
+        if (data is String) {
+          print('Response is string, parsing JSON...');
+          data = jsonDecode(data);
+        }
+        
+        print('Parsed data: $data');
+        print('Data type: ${data.runtimeType}');
+        
         if (data['success'] == 'true' || data['status'] == 'success') {
           return AuthResponseModel.fromJson(data);
         } else {
@@ -80,6 +100,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw ServerException('Network error occurred');
       }
     } on DioException catch (e) {
+      print('DioException: $e');
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw ServerException('Connection timeout');
@@ -89,6 +110,8 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw ServerException(e.message ?? 'Network error');
       }
     } catch (e) {
+      print('General exception in login: $e');
+      print('Exception type: ${e.runtimeType}');
       throw ServerException(e.toString());
     }
   }
