@@ -255,17 +255,42 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         queryParams['longitude'] = location['long'];
       }
       
-      final response = await dio.get(url, queryParameters: queryParams);
+      final response = await dio.get(
+        url, 
+        queryParameters: queryParams,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      
+      print('Home data raw response: ${response.data}');
+      print('Home data response type: ${response.data.runtimeType}');
       
       if (response.statusCode == 200) {
-        final data = response.data;
+        dynamic data = response.data;
+        
+        // Handle case where response might be a string that needs to be parsed
+        if (data is String) {
+          print('Home data response is string, parsing JSON...');
+          data = jsonDecode(data);
+        }
+        
+        print('Home data parsed: $data');
+        print('Home data type: ${data.runtimeType}');
+        
         return HomeDataModel.fromJson(data);
       } else {
         throw ServerException('Network error occurred');
       }
     } on DioException catch (e) {
+      print('DioException in getHomeData: $e');
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
+      print('General exception in getHomeData: $e');
+      print('Exception type: ${e.runtimeType}');
       throw ServerException(e.toString());
     }
   }
