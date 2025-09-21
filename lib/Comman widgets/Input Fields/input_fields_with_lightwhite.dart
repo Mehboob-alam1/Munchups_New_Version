@@ -98,8 +98,16 @@ class _InputFieldsWithLightWhiteColorState
             hintStyle: (widget.labelStyle != null)
                 ? widget.labelStyle
                 : lightBleck15W500,
-            prefixIcon: (widget.prefixIcon != null) ? widget.prefixIcon : null,
-            suffixIcon: (widget.suffixIcon != null) ? widget.suffixIcon : null,
+            prefixIcon: (widget.prefixIcon != null) 
+                ? (widget.prefixIcon is IconData 
+                    ? Icon(widget.prefixIcon) 
+                    : widget.prefixIcon)
+                : null,
+            suffixIcon: (widget.suffixIcon != null) 
+                ? (widget.suffixIcon is IconData 
+                    ? Icon(widget.suffixIcon) 
+                    : widget.suffixIcon)
+                : null,
             suffixIconColor: DynamicColor.lightGrey,
             errorStyle: const TextStyle(color: Colors.red),
             fillColor: (widget.fillColor == null)
