@@ -61,6 +61,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         'email': email,
         'password': password,
         'device_type': deviceType, // Use the global deviceType variable
+        'player_id': playerID, // Add the required player_id parameter
       });
       
       final response = await dio.post(
