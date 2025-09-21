@@ -22,9 +22,13 @@ class AuthResponseModel {
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
+    // Add debug logging
+    print('AuthResponseModel.fromJson received: $json');
+    
     // Handle myFollowers conversion safely to prevent "string is not subtype of int" error
     int? myFollowers;
     if (json['my_followers'] != null) {
+      print('my_followers value: ${json['my_followers']} (${json['my_followers'].runtimeType})');
       if (json['my_followers'] is String) {
         myFollowers = int.tryParse(json['my_followers']);
       } else if (json['my_followers'] is num) {
@@ -44,6 +48,9 @@ class AuthResponseModel {
       'connect_with_stripe': json['connect_with_stripe'],
       'signup_status': json['signup_status'],
     };
+    
+    print('Created userData: $userData');
+    print('userType: ${json['user_type']}');
 
     return AuthResponseModel(
       status: json['success'] == 'true' ? 'success' : 'error',
