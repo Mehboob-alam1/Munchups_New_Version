@@ -27,9 +27,11 @@ class _FollowingListState extends State<FollowingList> {
 
   getFollowingCount() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      myFollower = prefs.getInt('following_count')!;
-    });
+    if (mounted) { // Check if widget is still mounted
+      setState(() {
+        myFollower = prefs.getInt('following_count') ?? 0; // Use null-aware operator
+      });
+    }
   }
 
   saveFollowingCount(value) async {

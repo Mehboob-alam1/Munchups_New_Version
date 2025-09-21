@@ -54,13 +54,15 @@ class _DrawerPageState extends State<DrawerPage> {
 
   getUsertype() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      if (prefs.getString("user_type") != null) {
-        getUserType = prefs.getString("user_type").toString();
-      }
-      // userData = jsonDecode(prefs.getString('data').toString());
-      myFollower = prefs.getInt('following_count')!;
-    });
+    if (mounted) { // Check if widget is still mounted
+      setState(() {
+        if (prefs.getString("user_type") != null) {
+          getUserType = prefs.getString("user_type").toString();
+        }
+        // userData = jsonDecode(prefs.getString('data').toString());
+        myFollower = prefs.getInt('following_count') ?? 0; // Use null-aware operator
+      });
+    }
   }
 
   saveUserData(value) async {

@@ -32,7 +32,7 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
   Location location = Location();
   LatLng currentLocation = const LatLng(0.0, 0.0);
 
-  Timer timer = Timer(const Duration(seconds: 0), () {});
+  Timer? _timer; // Add timer variable to track it
 
   List<Marker> markers = [];
   BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
@@ -49,11 +49,19 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
     super.initState();
     _getLocation(context);
     setCustomMarker();
-    Timer(const Duration(seconds: 5), () {
-      setState(() {
-        isLoading = false;
-      });
+    _timer = Timer(const Duration(seconds: 5), () {
+      if (mounted) { // Check if widget is still mounted
+        setState(() {
+          isLoading = false;
+        });
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel timer when disposing
+    super.dispose();
   }
 
   saveUserLatLong(latlong) async {
