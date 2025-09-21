@@ -55,20 +55,23 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   @override
   Future<AuthResponseModel> login(String email, String password) async {
     try {
+      // Use FormData instead of JSON data for the server
+      final formData = FormData.fromMap({
+        'email': email,
+        'password': password,
+      });
+      
       final response = await dio.post(
         'login.php',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: formData,
       );
       
       if (response.statusCode == 200) {
         final data = response.data;
-        if (data['status'] == 'success') {
+        if (data['success'] == 'true' || data['status'] == 'success') {
           return AuthResponseModel.fromJson(data);
         } else {
-          throw ServerException(data['message'] ?? 'Login failed');
+          throw ServerException(data['msg'] ?? data['message'] ?? 'Login failed');
         }
       } else {
         throw ServerException('Network error occurred');
