@@ -7,6 +7,7 @@ import '../../models/user_profile_model.dart';
 import '../../models/home_data_model.dart';
 import '../../models/search_response_model.dart';
 import '../../models/notification_model.dart';
+import '../../../Component/global_data/global_data.dart'; // Import global data
 
 abstract class RemoteDataSource {
   Future<AuthResponseModel> login(String email, String password);
@@ -59,6 +60,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       final formData = FormData.fromMap({
         'email': email,
         'password': password,
+        'device_type': deviceType, // Use the global deviceType variable
       });
       
       final response = await dio.post(
