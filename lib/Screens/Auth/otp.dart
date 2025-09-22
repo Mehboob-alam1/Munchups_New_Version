@@ -233,15 +233,23 @@ void verifyApiCall(context) async {
   Utils().showSpinner(context);
 
   try {
-    final authFlowProvider = context.read<AuthFlowProvider>();
+    print('Verifying OTP for register: ${widget.emailId} with code: $otpCode');
+    
+    final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
     await GetApiServer()
         .verifyOtpApi(otpCode, widget.emailId.toString())
         .then((value) {
-      log(value.toString());
+      print('=== OTP VERIFICATION RESPONSE ===');
+      print('Full response: $value');
+      print('Response type: ${value.runtimeType}');
+      print('Success field: ${value['success']}');
+      print('Message field: ${value['msg']}');
+      print('================================');
+      
       FocusScope.of(context).requestFocus(FocusNode());
       Utils().stopSpinner(context);
 
-      if (value['success'] == 'true') {
+      if (value['success'] == 'true' || value['success'] == true) {
         // Mark account as verified
         authFlowProvider.saveVerificationStatus('verified');
         
@@ -255,10 +263,16 @@ void verifyApiCall(context) async {
           PageNavigateScreen().pushRemovUntil(context, LoginPage());
         });
       } else {
-        Utils().myToast(context, msg: value['msg']);
+        print('OTP verification failed: ${value['msg']}');
+        Utils().myToast(context, msg: value['msg'] ?? 'Verification failed');
       }
+    }).catchError((error) {
+      print('OTP verification catchError: $error');
+      Utils().stopSpinner(context);
+      Utils().myToast(context, msg: 'Verification failed. Please try again.');
     });
   } catch (e) {
+    print('OTP verification error: $e');
     Utils().stopSpinner(context);
     Utils().myToast(context, msg: 'Verification failed. Please try again.');
   }
@@ -389,7 +403,7 @@ void verifyApiCall(context) async {
     try {
       print('Verifying OTP for login: ${widget.emailId} with code: $otpCode');
       
-      final authFlowProvider = context.read<AuthFlowProvider>();
+      final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
       await GetApiServer()
           .verifyOtpApi(otpCode, widget.emailId.toString())
           .then((value) {
