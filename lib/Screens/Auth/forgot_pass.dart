@@ -100,36 +100,44 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   }
 
   void forgetPasswordApiCall(context) async {
+    // First validate the form
     if (globalKey.currentState!.validate()) {
       Utils().showSpinner(context);
 
       try {
+        print('Sending forgot password request for: ${emilController.text.trim()}');
+        
         await GetApiServer()
             .forgetPasswordApi(emilController.text.trim())
             .then((value) {
+          print('Forgot password response: $value');
           FocusScope.of(context).requestFocus(FocusNode());
           Utils().stopSpinner(context);
 
-          if (value['success'] == 'true') {
-            // Save pending data for OTP verification
-            final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
-            authFlowProvider.savePendingUserData(
-              {'email': emilController.text.trim()}, 
-              emilController.text.trim(), 
-              'forgot_password'
-            );
-            authFlowProvider.setCurrentStep('otp');
-            
-            myDialogPopup(context, value['msg']);
+          if (value['success'] == 'true' || value['success'] == true) {
+            // Success case - show success dialog
+            print('Forgot password successful');
+            myDialogPopup(context, value['msg'] ?? 'Reset email sent successfully!');
           } else {
-            Utils().myToast(context, msg: value['msg']);
+            // Failure case - show error message
+            print('Forgot password failed: ${value['msg']}');
+            Utils().myToast(context, msg: value['msg'] ?? 'Failed to send reset email. Please try again.');
           }
+        }).catchError((error) {
+          // Network or parsing error
+          print('Forgot password catchError: $error');
+          Utils().stopSpinner(context);
+          Utils().myToast(context, msg: 'Network error. Please check your connection and try again.');
         });
       } catch (e) {
+        // General error
+        print('Forgot password error: $e');
         Utils().stopSpinner(context);
-        log(e.toString());
-        Utils().myToast(context, msg: 'Failed to send reset email. Please try again.');
+        Utils().myToast(context, msg: 'An error occurred. Please try again.');
       }
+    } else {
+      // Form validation failed
+      Utils().myToast(context, msg: 'Please enter a valid email address');
     }
   }
 
