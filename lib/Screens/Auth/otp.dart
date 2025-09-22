@@ -19,6 +19,8 @@ import 'package:sms_autofill/sms_autofill.dart';
 
 import '../../Component/Strings/strings.dart';
 import '../../Component/color_class/color_class.dart';
+import '../../Component/providers/auth_flow_provider.dart';
+import 'package:provider/provider.dart';
 
 class OtpPage extends StatefulWidget {
   dynamic emailId;
@@ -208,6 +210,7 @@ class _OtpPageState extends State<OtpPage> {
     Utils().showSpinner(context);
 
     try {
+      final authFlowProvider = context.read<AuthFlowProvider>();
       await GetApiServer()
           .verifyOtpApi(otpCode, widget.emailId.toString())
           .then((value) {
@@ -216,6 +219,9 @@ class _OtpPageState extends State<OtpPage> {
         Utils().stopSpinner(context);
 
         if (value['success'] == 'true') {
+          // Mark account as verified
+          authFlowProvider.saveVerificationStatus('verified');
+
           if (widget.type == 'register') {
             myDialogPopup(context);
           } else {
@@ -236,6 +242,7 @@ class _OtpPageState extends State<OtpPage> {
     Utils().showSpinner(context);
 
     try {
+      final authFlowProvider = context.read<AuthFlowProvider>();
       await GetApiServer()
           .resendOtpApi(widget.emailId.toString())
           .then((value) {
@@ -261,6 +268,7 @@ class _OtpPageState extends State<OtpPage> {
 // For Forget Passwoord Process
   void verifyForgetPasswordApiCall(context) async {
     Utils().showSpinner(context);
+    final authFlowProvider = context.read<AuthFlowProvider>();
     dynamic body = {
       'email': widget.emailId.toString(),
       'otp': otpCode,
@@ -286,6 +294,7 @@ class _OtpPageState extends State<OtpPage> {
     Utils().showSpinner(context);
 
     try {
+      final authFlowProvider = context.read<AuthFlowProvider>();
       await GetApiServer()
           .forgetPasswordApi(widget.emailId.toString())
           .then((value) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -27,6 +28,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Comman widgets/Input Fields/input_fields_with_lightwhite.dart';
 import '../../Component/Strings/strings.dart';
+import '../../Component/providers/auth_flow_provider.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
   RegisterPage({super.key});
@@ -41,6 +44,17 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController countryTextController = TextEditingController();
   TextEditingController stateController = TextEditingController();
   TextEditingController cityController = TextEditingController();
+
+  Location locationdata = Location();
+
+  List userType = [
+    'Buyer',
+    'Chef',
+    'Grocer',
+  ];
+  List addressList = [];
+  List selectedFood = [];
+  File imageFile = File('');
 
   bool isLoading = false;
   bool passwordVisible = false;
@@ -446,239 +460,12 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
   }
-
   Widget addressFiled() {
-    return Column(
-      children: [
-        InputFieldsWithLightWhiteColor(
-          onTap: () {
-            if (postalCode.isNotEmpty) {
-              showDialog(
-                context: context,
-                barrierDismissible: Platform.isAndroid ? false : true,
-                builder: (context) => AddressPopupPopUp(list: addressList)
-              ).then((value) {
-                if (addressController.text.isNotEmpty) {
-                  getGoogleAddress(addressController.text.trim());
-                }
-              });
-            } else {
-              Utils().myToast(context, msg: 'Please enter postal code');
-            }
-          },
-          readOnly: true,
-          controller: addressController,
-          labelText: TextStrings.textKey['address'],
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.streetAddress,
-          style: black15bold,
-          suffixIcon: const Icon(
-            Icons.arrow_drop_down,
-            color: DynamicColor.lightGrey,
-          ),
-        ),
-        SizedBox(height: SizeConfig.getSize5(context: context)),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 1,
-                color: DynamicColor.lightGrey,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: SizeConfig.getSize10(context: context)),
-              child: Text(
-                'OR',
-                style: lightGrey12W400,
-              ),
-            ),
-            Expanded(
-              child: Container(
-                height: 1,
-                color: DynamicColor.lightGrey,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: SizeConfig.getSize5(context: context)),
-        InputFieldsWithLightWhiteColor(
-          onChanged: (value) {
-            setState(() {
-              manualAddress = value;
-            });
-          },
-          controller: TextEditingController(text: manualAddress),
-          labelText: 'Enter address manually',
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.streetAddress,
-          style: black15bold,
-          suffixIcon: const Icon(
-            Icons.edit,
-            color: DynamicColor.lightGrey,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget countryFiled() {
     return InputFieldsWithLightWhiteColor(
-        labelText: 'Country',
-        // readOnly: countryTextController.text.isNotEmpty,
-        controller: countryTextController,
+        controller: addressController,
+        labelText: TextStrings.textKey['address'],
         textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {});
-  }
-
-  Widget stateFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: 'State',
-        // readOnly: stateController.text.isNotEmpty,
-        controller: stateController,
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {});
-  }
-
-  Widget cityFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: 'City',
-        //readOnly: cityController.text.isNotEmpty,
-        controller: cityController,
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {});
-  }
-
-  Widget bySignin() {
-    return Column(
-      children: [
-        Text(TextStrings.textKey['by_sign']!, style: white17Bold),
-        InkWell(
-          onTap: () {
-            PageNavigateScreen().push(context, TermsAndConditonPage());
-            // Utils.launchUrls(context, 'https://standardjcm.com/privacy.html');
-          },
-          child: Text(
-            TextStrings.textKey['term_policy']!,
-            style: primary15boldWithUnderline,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget buttons() {
-    return CommanButton(
-        heroTag: 1,
-        shap: 10.0,
-        width: MediaQuery.of(context).size.width * 0.5,
-        buttonName: TextStrings.textKey['signup']!.toUpperCase(),
-        onPressed: () {
-          if (globalKey.currentState!.validate()) {
-            if (roleType != null) {
-              if (mobileNo.isNotEmpty) {
-                registerUser();
-              } else {
-                        ],
-                      ),
-                    ),
-                    countryFiled(),
-                    SizedBox(height: SizeConfig.getSize10(context: context)),
-                    Row(
-                      children: [
-                        Expanded(child: stateFiled()),
-                        SizedBox(width: SizeConfig.getSize10(context: context)),
-                        Expanded(child: cityFiled()),
-                      ],
-                    ),
-                    SizedBox(height: SizeConfig.getSize30(context: context)),
-                    bySignin(),
-                    SizedBox(height: SizeConfig.getSize25(context: context)),
-                    buttons(),
-                    SizedBox(height: SizeConfig.getSize20(context: context)),
-                    alreadyAcunt(),
-                    SizedBox(height: SizeConfig.getSize40(context: context)),
-                  ],
-                ),
-              )),
-        ),
-      ),
-    );
-  }
-
-  Widget uesrImage() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        InkWell(
-          onTap: () {
-            showImagePicker(context);
-          },
-          child: imageFile.path.isNotEmpty
-              ? CircleAvatar(
-                  radius: 60,
-                  backgroundColor: DynamicColor.lightGrey,
-                  backgroundImage: FileImage(imageFile),
-                )
-              : const CircleAvatar(
-                  radius: 60,
-                  backgroundColor: DynamicColor.lightGrey,
-                  backgroundImage: AssetImage('assets/images/user_icon.jpg'),
-                ),
-        ),
-        Align(
-          alignment: Alignment.center,
-          child: Padding(
-            padding: EdgeInsets.only(
-                left: SizeConfig.getSize60(context: context) +
-                    SizeConfig.getSize10(context: context),
-                top: SizeConfig.getSize40(context: context) +
-                    SizeConfig.getSize25(context: context)),
-            child: InkWell(
-              onTap: () {
-                showImagePicker(context);
-              },
-              child: const CircleAvatar(
-                radius: 20,
-                backgroundColor: DynamicColor.primaryColor,
-                child: Icon(
-                  Icons.camera_alt,
-                  color: DynamicColor.white,
-                ),
-              ),
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget firstNameFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['first_name'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
+        keyboardType: TextInputType.streetAddress,
         style: black15bold,
         validator: (val) {
           if (val.isEmpty) {
@@ -687,267 +474,49 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         onChanged: (value) {
           setState(() {
-            firstName = value;
+            // You can add any logic here if needed
           });
         });
   }
-
-  Widget lastNameFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['last_name'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {
-          setState(() {
-            lastName = value;
-          });
-        });
-  }
-
-  Widget userNameFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['user_name'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {
-          setState(() {
-            userName = value;
-          });
-        });
-  }
-
-  Widget shopNameFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['shop_name'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.text,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {
-          setState(() {
-            shopName = value;
-          });
-        });
-  }
-
-  Widget emialFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['email_add'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.emailAddress,
-        style: black15bold,
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {
-          setState(() {
-            emailID = value;
-          });
-        });
-  }
-
-  Widget passwordFiled() {
-    return InputFieldsWithLightWhiteColor(
-        labelText: TextStrings.textKey['password'],
-        textInputAction: TextInputAction.done,
-        keyboardType: TextInputType.emailAddress,
-        style: black15bold,
-        obsecureText: !passwordVisible,
-        maxLines: 1,
-        suffixIcon: IconButton(
-          icon: Icon(
-            passwordVisible ? Icons.visibility : Icons.visibility_off,
-          ),
-          onPressed: () {
-            setState(() {
-              passwordVisible = !passwordVisible;
-            });
-          },
-        ),
-        validator: (val) {
-          if (val.isEmpty) {
-            return TextStrings.textKey['field_req']!;
-          }
-        },
-        onChanged: (value) {
-          setState(() {
-            password = value;
-          });
-        });
-  }
-
-  Widget mobileFiled() {
-    return Row(
-      children: [
-        Expanded(
-            child: InkWell(
-          onTap: () {
-            getCountry(context);
-          },
-          child: Container(
-            height: 45,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: DynamicColor.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: countryFlag.isEmpty
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/flag.png',
-                        height: 13,
-                      ),
-                      Text(
-                        countryCode,
-                        style: black15w5,
-                      ),
-                    ],
-                  )
-                : Text(
-                    countryFlag + countryCode,
-                    style: black15w5,
-                  ),
-          ),
-        )),
-        const SizedBox(width: 5),
-        Expanded(
-          flex: 4,
-          child: InputFieldsWithLightWhiteColor(
-              labelText: TextStrings.textKey['your_no'],
-              textInputAction: TextInputAction.done,
-              keyboardType: TextInputType.phone,
-              style: black15bold,
-              // validator: (val) {
-              //   if (val.isEmpty) {
-              //     return TextStrings.textKey['field_req']!;
-              //   }
-              // },
-              onChanged: (value) {
-                setState(() {
-                  mobileNo = value;
-                });
-              }),
-        ),
-      ],
-    );
-  }
-
-  Widget postalCodeFiled() {
-    return InputFieldsWithLightWhiteColor(
-      labelText: TextStrings.textKey['zip'],
-      textInputAction: TextInputAction.done,
-      textCapitalization: TextCapitalization.characters,
-      keyboardType: TextInputType.text,
-      style: black15bold,
-      validator: (val) {
-        if (val.isEmpty) {
-          return TextStrings.textKey['field_req']!;
-        }
-      },
-      onChanged: (value) {
-        setState(() {
-          postalCode = value;
-          addressController.text = '';
-          getOnlineAddress(value);
-        });
-      },
-    );
-  }
-
-  Widget addressFiled() {
-    return Column(
-      children: [
-        InputFieldsWithLightWhiteColor(
-          onTap: () {
-            if (postalCode.isNotEmpty) {
-              showDialog(
-                context: context,
-                barrierDismissible: Platform.isAndroid ? false : true,
-                builder: (context) => AddressPopupPopUp(list: addressList)
-              ).then((value) {
-                if (addressController.text.isNotEmpty) {
-                  getGoogleAddress(addressController.text.trim());
-                }
-              });
-            } else {
-              Utils().myToast(context, msg: 'Please enter postal code');
-            }
-          },
-          readOnly: true,
-          controller: addressController,
-          labelText: TextStrings.textKey['address'],
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.streetAddress,
-          style: black15bold,
-          suffixIcon: const Icon(
-            Icons.arrow_drop_down,
-            color: DynamicColor.lightGrey,
-          ),
-        ),
-        SizedBox(height: SizeConfig.getSize5(context: context)),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 1,
-                color: DynamicColor.lightGrey,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: SizeConfig.getSize10(context: context)),
-              child: Text(
-                'OR',
-                style: lightGrey12W400,
-              ),
-            ),
-            Expanded(
-              child: Container(
-                height: 1,
-                color: DynamicColor.lightGrey,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: SizeConfig.getSize5(context: context)),
-        InputFieldsWithLightWhiteColor(
-          onChanged: (value) {
-            setState(() {
-              manualAddress = value;
-            });
-          },
-          controller: TextEditingController(text: manualAddress),
-          labelText: 'Enter address manually',
-          textInputAction: TextInputAction.done,
-          keyboardType: TextInputType.streetAddress,
-          style: black15bold,
-          suffixIcon: const Icon(
-            Icons.edit,
-            color: DynamicColor.lightGrey,
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget addressFiled() {
+  //   return InputFieldsWithLightWhiteColor(
+  //       onTap: () {
+  //         if (postalCode.isNotEmpty) {
+  //           // if (addressList.isNotEmpty) {
+  //           showDialog(
+  //                   context: context,
+  //                   barrierDismissible: Platform.isAndroid ? false : true,
+  //                   builder: (context) => AddressPopupPopUp(list: addressList))
+  //               .then((value) {
+  //             if (addressController.text.isNotEmpty) {
+  //               getGoogleAddress(addressController.text.trim());
+  //             }
+  //           });
+  //           // } else {
+  //           //   Utils().myToast(context, msg: 'Address not found!');
+  //           // }
+  //         } else {
+  //           Utils().myToast(context, msg: 'Please enter postal code');
+  //         }
+  //       },
+  //       readOnly: true,
+  //       controller: addressController,
+  //       labelText: TextStrings.textKey['address'],
+  //       textInputAction: TextInputAction.done,
+  //       keyboardType: TextInputType.streetAddress,
+  //       style: black15bold,
+  //       suffixIcon: const Icon(
+  //         Icons.arrow_drop_down,
+  //         size: 35,
+  //         color: DynamicColor.primaryColor,
+  //       ),
+  //       validator: (val) {
+  //         if (val.isEmpty) {
+  //           return TextStrings.textKey['field_req']!;
+  //         }
+  //       },
+  //       onChanged: (value) {});
+  // }
 
   Widget countryFiled() {
     return InputFieldsWithLightWhiteColor(
@@ -1254,22 +823,30 @@ class _RegisterPageState extends State<RegisterPage> {
         'currency': countrySymbol,
       };
     }
+    
     try {
       await PostApiServer().registrationApi(body, imageFile).then((value) {
         log(value.toString());
         Utils().stopSpinner(context);
 
         if (value['success'] == 'true') {
+          // Save pending user data for OTP verification
+          final authFlowProvider = context.read<AuthFlowProvider>();
+          authFlowProvider.savePendingUserData(body, emailID.trim(), 'register');
+          authFlowProvider.setCurrentStep('register');
+          
           addressController.text = '';
           saveUserCountry(countrySortName, countrySymbol);
-          Utils().myToast(context, msg: value['msg']);
+          Utils().myToast(context, msg: 'Registration successful! Please verify your email.');
+          
           Timer(const Duration(milliseconds: 600), () {
             PageNavigateScreen().push(
-                context,
-                OtpPage(
-                  emailId: emailID.trim(),
-                  type: 'register',
-                ));
+              context,
+              OtpPage(
+                emailId: emailID.trim(),
+                type: 'register',
+              )
+            );
           });
         } else {
           Utils().myToast(context, msg: value['msg']);
@@ -1278,6 +855,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       Utils().stopSpinner(context);
       log(e.toString());
+      Utils().myToast(context, msg: 'Registration failed. Please try again.');
     }
   }
 

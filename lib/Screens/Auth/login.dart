@@ -26,6 +26,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
+import '../../Component/providers/auth_flow_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -271,11 +272,34 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleLogin() async {
     if (globalKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
+      final authFlowProvider = context.read<AuthFlowProvider>();
 
       final success = await authProvider.login(emailID, password);
 
       if (success && mounted) {
-        // Navigate based on user type
+        // Check if account is verified
+        bool isVerified = await authFlowProvider.isAccountVerified();
+        
+        if (!isVerified) {
+          // Account not verified, go to OTP screen
+          authFlowProvider.savePendingUserData(
+            authProvider.userData, 
+            emailID, 
+            'login'
+          );
+          authFlowProvider.setCurrentStep('otp');
+          
+          PageNavigateScreen().push(
+            context,
+            OtpPage(
+              emailId: emailID,
+              type: 'login',
+            )
+          );
+          return;
+        }
+
+        // Account is verified, proceed to home screen
         final userType = authProvider.userType;
         Widget nextScreen;
 

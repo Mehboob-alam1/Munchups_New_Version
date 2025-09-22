@@ -11,6 +11,7 @@ import 'package:munchups_app/presentation/providers/app_provider.dart';
 import 'package:munchups_app/presentation/providers/auth_provider.dart';
 import 'package:munchups_app/presentation/providers/cart_provider.dart';
 import 'package:munchups_app/presentation/providers/data_provider.dart';
+import 'Component/providers/auth_flow_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +62,7 @@ void main() async {
          ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
          ChangeNotifierProvider(create: (_) => di.sl<CartProvider>()),
          ChangeNotifierProvider(create: (_) => di.sl<DataProvider>()),
+         ChangeNotifierProvider(create: (_) => AuthFlowProvider()),
 
      ],
         child: const MyApp()
