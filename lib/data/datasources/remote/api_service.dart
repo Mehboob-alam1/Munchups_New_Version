@@ -94,6 +94,11 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         if (data['success'] == 'true' || data['status'] == 'success') {
           return AuthResponseModel.fromJson(data);
         } else {
+          // Check if account is not activated
+          if (data['flag'] == 'not_activated' || 
+              (data['msg']?.toString().contains('activate') ?? false)) {
+            throw AccountNotActivatedException(data['msg'] ?? 'Please activate your account');
+          }
           throw ServerException(data['msg'] ?? data['message'] ?? 'Login failed');
         }
       } else {

@@ -7,6 +7,7 @@ import '../../domain/usecases/auth/login_usecase.dart';
 import '../../domain/usecases/auth/register_usecase.dart';
 import '../../domain/usecases/auth/verify_otp_usecase.dart';
 import '../../domain/usecases/auth/forgot_password_usecase.dart';
+import '../../core/error/exceptions.dart';
 
 class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -91,6 +92,9 @@ class AuthProvider extends ChangeNotifier {
           return true;
         },
       );
+    } on AccountNotActivatedException catch (e) {
+      _setError('ACCOUNT_NOT_ACTIVATED:${e.message}');
+      return false;
     } catch (e) {
       _setError('An error occurred: $e');
       return false;

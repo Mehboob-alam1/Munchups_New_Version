@@ -27,6 +27,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../Component/providers/auth_flow_provider.dart';
+import 'otp.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -277,29 +278,7 @@ class _LoginPageState extends State<LoginPage> {
       final success = await authProvider.login(emailID, password);
 
       if (success && mounted) {
-        // Check if account is verified
-        bool isVerified = await authFlowProvider.isAccountVerified();
-        
-        if (!isVerified) {
-          // Account not verified, go to OTP screen
-          authFlowProvider.savePendingUserData(
-            authProvider.userData, 
-            emailID, 
-            'login'
-          );
-          authFlowProvider.setCurrentStep('otp');
-          
-          PageNavigateScreen().push(
-            context,
-            OtpPage(
-              emailId: emailID,
-              type: 'login',
-            )
-          );
-          return;
-        }
-
-        // Account is verified, proceed to home screen
+        // Login successful, proceed to home screen
         final userType = authProvider.userType;
         Widget nextScreen;
 
@@ -318,6 +297,31 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         PageNavigateScreen().normalpushReplesh(context, nextScreen);
+      } else {
+        // Login failed, check if it's because account is not verified
+        String errorMessage = authProvider.error;
+        
+        if (errorMessage.contains('Please activate your account') || 
+            errorMessage.contains('not_activated')) {
+          // Account exists but not verified, redirect to OTP
+          authFlowProvider.savePendingUserData(
+            {'email': emailID}, // Save minimal data for OTP
+            emailID, 
+            'login'
+          );
+          authFlowProvider.setCurrentStep('otp');
+          
+          Utils().myToast(context, msg: 'Please verify your account first');
+          
+          PageNavigateScreen().push(
+            context,
+            OtpPage(
+              emailId: emailID,
+              type: 'login',
+            )
+          );
+        }
+        // If it's a different error, the authProvider.error will be shown
       }
     }
   }

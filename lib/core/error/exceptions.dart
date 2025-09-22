@@ -24,3 +24,11 @@ class NetworkException implements Exception {
   @override
   String toString() => 'NetworkException: $message';
 }
+
+class AccountNotActivatedException implements Exception {
+  final String message;
+  AccountNotActivatedException(this.message);
+  
+  @override
+  String toString() => message;
+}
