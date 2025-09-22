@@ -24,11 +24,11 @@ import 'package:munchups_app/Screens/Setting/privacy&policy.dart';
 import 'package:munchups_app/Screens/Setting/terms&con.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../Apis/get_apis.dart';
 import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../Component/providers/auth_flow_provider.dart';
 import 'otp.dart';
-import 'package:munchups_app/Component/utils/api_server/get_api_server.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

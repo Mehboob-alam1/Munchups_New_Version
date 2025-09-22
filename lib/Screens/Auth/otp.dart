@@ -21,6 +21,8 @@ import '../../Component/Strings/strings.dart';
 import '../../Component/color_class/color_class.dart';
 import '../../Component/providers/auth_flow_provider.dart';
 import 'package:provider/provider.dart';
+import '../Buyer/Home/buyer_home.dart';
+import 'login.dart';
 
 class OtpPage extends StatefulWidget {
   dynamic emailId;
@@ -203,6 +205,8 @@ class _OtpPageState extends State<OtpPage> {
     if (otpCode.isNotEmpty) {
       if (widget.type == 'register') {
         verifyApiCall(context);
+      } else if (widget.type == 'login') {
+        verifyLoginApiCall(context);
       } else {
         verifyForgetPasswordApiCall(context);
       }
@@ -212,37 +216,40 @@ class _OtpPageState extends State<OtpPage> {
   }
 
 //For Register Process
-  void verifyApiCall(context) async {
-    Utils().showSpinner(context);
+void verifyApiCall(context) async {
+  Utils().showSpinner(context);
 
-    try {
-      final authFlowProvider = context.read<AuthFlowProvider>();
-      await GetApiServer()
-          .verifyOtpApi(otpCode, widget.emailId.toString())
-          .then((value) {
-        log(value.toString());
-        FocusScope.of(context).requestFocus(FocusNode());
-        Utils().stopSpinner(context);
-
-        if (value['success'] == 'true') {
-          // Mark account as verified
-          authFlowProvider.saveVerificationStatus('verified');
-
-          if (widget.type == 'register') {
-            myDialogPopup(context);
-          } else {
-            Utils().myToast(context, msg: 'OTP verification successfully');
-            myResetDialogPopup(context, value['msg']);
-          }
-        } else {
-          Utils().myToast(context, msg: value['msg']);
-        }
-      });
-    } catch (e) {
+  try {
+    final authFlowProvider = context.read<AuthFlowProvider>();
+    await GetApiServer()
+        .verifyOtpApi(otpCode, widget.emailId.toString())
+        .then((value) {
+      log(value.toString());
+      FocusScope.of(context).requestFocus(FocusNode());
       Utils().stopSpinner(context);
-      log(e.toString());
-    }
+
+      if (value['success'] == 'true') {
+        // Mark account as verified
+        authFlowProvider.saveVerificationStatus('verified');
+        
+        // Complete registration
+        authFlowProvider.completeRegistration();
+        
+        Utils().myToast(context, msg: 'Account verified successfully!');
+        
+        // Navigate to login
+        Timer(const Duration(milliseconds: 600), () {
+          PageNavigateScreen().pushRemovUntil(context, LoginPage());
+        });
+      } else {
+        Utils().myToast(context, msg: value['msg']);
+      }
+    });
+  } catch (e) {
+    Utils().stopSpinner(context);
+    Utils().myToast(context, msg: 'Verification failed. Please try again.');
   }
+}
 
   void resendOTPApiCall(context) async {
     Utils().showSpinner(context);
@@ -360,6 +367,41 @@ class _OtpPageState extends State<OtpPage> {
             ),
           );
         });
+  }
+
+  // Add this new method for login verification
+  void verifyLoginApiCall(context) async {
+    Utils().showSpinner(context);
+
+    try {
+      final authFlowProvider = context.read<AuthFlowProvider>();
+      await GetApiServer()
+          .verifyOtpApi(otpCode, widget.emailId.toString())
+          .then((value) {
+        log(value.toString());
+        FocusScope.of(context).requestFocus(FocusNode());
+        Utils().stopSpinner(context);
+
+        if (value['success'] == 'true') {
+          // Mark account as verified
+          authFlowProvider.saveVerificationStatus('verified');
+          
+          Utils().myToast(context, msg: 'Account verified successfully!');
+          
+          // Navigate to appropriate home screen
+          Timer(const Duration(milliseconds: 600), () {
+            // You can get user type from authFlowProvider.pendingUserData if needed
+            // For now, defaulting to BuyerHomePage
+            PageNavigateScreen().pushRemovUntil(context, BuyerHomePage());
+          });
+        } else {
+          Utils().myToast(context, msg: value['msg']);
+        }
+      });
+    } catch (e) {
+      Utils().stopSpinner(context);
+      Utils().myToast(context, msg: 'Verification failed. Please try again.');
+    }
   }
 
   @override
