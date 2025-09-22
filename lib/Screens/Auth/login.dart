@@ -28,6 +28,7 @@ import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../Component/providers/auth_flow_provider.dart';
 import 'otp.dart';
+import 'package:munchups_app/Component/utils/api_server/get_api_server.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,6 +45,12 @@ class _LoginPageState extends State<LoginPage> {
 
   String emailID = '';
   String password = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // listenOtp(); // This line is removed as per the new_code, as the OTP screen will handle its own state.
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +310,10 @@ class _LoginPageState extends State<LoginPage> {
         
         if (errorMessage.contains('Please activate your account') || 
             errorMessage.contains('not_activated')) {
-          // Account exists but not verified, redirect to OTP
+          // Account exists but not verified, send OTP first then redirect
+          await _sendOtpForLoginVerification();
+          
+          // Save pending data and redirect to OTP
           authFlowProvider.savePendingUserData(
             {'email': emailID}, // Save minimal data for OTP
             emailID, 
@@ -311,7 +321,7 @@ class _LoginPageState extends State<LoginPage> {
           );
           authFlowProvider.setCurrentStep('otp');
           
-          Utils().myToast(context, msg: 'Please verify your account first');
+          Utils().myToast(context, msg: 'OTP sent to your email. Please verify your account.');
           
           PageNavigateScreen().push(
             context,
@@ -323,6 +333,16 @@ class _LoginPageState extends State<LoginPage> {
         }
         // If it's a different error, the authProvider.error will be shown
       }
+    }
+  }
+
+  // Add this method to send OTP for login verification
+  Future<void> _sendOtpForLoginVerification() async {
+    try {
+      await GetApiServer().resendOtpApi(emailID);
+    } catch (e) {
+      debugPrint('Error sending OTP: $e');
+      // Don't show error to user here, let OTP screen handle it
     }
   }
 

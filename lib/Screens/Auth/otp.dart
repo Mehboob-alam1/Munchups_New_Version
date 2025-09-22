@@ -44,8 +44,14 @@ class _OtpPageState extends State<OtpPage> {
   @override
   void initState() {
     super.initState();
-
     listenOtp();
+    
+    // Automatically send OTP when screen opens for login verification
+    if (widget.type == 'login') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        resendOTPApiCall(context);
+      });
+    }
   }
 
   void listenOtp() async {
