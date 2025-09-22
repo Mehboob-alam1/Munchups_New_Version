@@ -20,11 +20,21 @@ class GetApiServer {
     String url =
         Utils.baseUrl() + 'activate_account.php?guid=$otp&email=$emailID';
 
+    print('=== OTP VERIFICATION API CALL ===');
+    print('URL: $url');
+    print('OTP: $otp');
+    print('Email: $emailID');
+    print('===============================');
+
     final response = await http.get(Uri.parse(url), headers: {
       'Content-Type': 'application/json',
     });
 
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
     dynamic data = jsonDecode(response.body);
+    print('Parsed data: $data');
     return data;
   }
 

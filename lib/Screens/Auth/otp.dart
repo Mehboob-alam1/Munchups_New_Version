@@ -387,15 +387,23 @@ void verifyApiCall(context) async {
     Utils().showSpinner(context);
 
     try {
+      print('Verifying OTP for login: ${widget.emailId} with code: $otpCode');
+      
       final authFlowProvider = context.read<AuthFlowProvider>();
       await GetApiServer()
           .verifyOtpApi(otpCode, widget.emailId.toString())
           .then((value) {
-        log(value.toString());
+        print('=== OTP VERIFICATION RESPONSE ===');
+        print('Full response: $value');
+        print('Response type: ${value.runtimeType}');
+        print('Success field: ${value['success']}');
+        print('Message field: ${value['msg']}');
+        print('================================');
+        
         FocusScope.of(context).requestFocus(FocusNode());
         Utils().stopSpinner(context);
 
-        if (value['success'] == 'true') {
+        if (value['success'] == 'true' || value['success'] == true) {
           // Mark account as verified
           authFlowProvider.saveVerificationStatus('verified');
           
@@ -403,15 +411,19 @@ void verifyApiCall(context) async {
           
           // Navigate to appropriate home screen
           Timer(const Duration(milliseconds: 600), () {
-            // You can get user type from authFlowProvider.pendingUserData if needed
-            // For now, defaulting to BuyerHomePage
             PageNavigateScreen().pushRemovUntil(context, BuyerHomePage());
           });
         } else {
-          Utils().myToast(context, msg: value['msg']);
+          print('OTP verification failed: ${value['msg']}');
+          Utils().myToast(context, msg: value['msg'] ?? 'Verification failed');
         }
+      }).catchError((error) {
+        print('OTP verification catchError: $error');
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Verification failed. Please try again.');
       });
     } catch (e) {
+      print('OTP verification error: $e');
       Utils().stopSpinner(context);
       Utils().myToast(context, msg: 'Verification failed. Please try again.');
     }
