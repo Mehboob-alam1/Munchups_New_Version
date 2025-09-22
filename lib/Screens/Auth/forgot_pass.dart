@@ -15,6 +15,8 @@ import 'package:munchups_app/Component/utils/images_urls.dart';
 import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
 import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Auth/otp.dart';
+import 'package:provider/provider.dart';
+import '../../Component/providers/auth_flow_provider.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({super.key});
@@ -98,24 +100,36 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   }
 
   void forgetPasswordApiCall(context) async {
-    Utils().showSpinner(context);
+    if (globalKey.currentState!.validate()) {
+      Utils().showSpinner(context);
 
-    try {
-      await GetApiServer()
-          .forgetPasswordApi(emilController.text.trim())
-          .then((value) {
-        FocusScope.of(context).requestFocus(FocusNode());
+      try {
+        await GetApiServer()
+            .forgetPasswordApi(emilController.text.trim())
+            .then((value) {
+          FocusScope.of(context).requestFocus(FocusNode());
+          Utils().stopSpinner(context);
+
+          if (value['success'] == 'true') {
+            // Save pending data for OTP verification
+            final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
+            authFlowProvider.savePendingUserData(
+              {'email': emilController.text.trim()}, 
+              emilController.text.trim(), 
+              'forgot_password'
+            );
+            authFlowProvider.setCurrentStep('otp');
+            
+            myDialogPopup(context, value['msg']);
+          } else {
+            Utils().myToast(context, msg: value['msg']);
+          }
+        });
+      } catch (e) {
         Utils().stopSpinner(context);
-
-        if (value['success'] == 'true') {
-          myDialogPopup(context, value['msg']);
-        } else {
-          Utils().myToast(context, msg: value['msg']);
-        }
-      });
-    } catch (e) {
-      Utils().stopSpinner(context);
-      log(e.toString());
+        log(e.toString());
+        Utils().myToast(context, msg: 'Failed to send reset email. Please try again.');
+      }
     }
   }
 
