@@ -52,13 +52,33 @@ class GetApiServer {
 
   Future forgetPasswordApi(email) async {
     String url = Utils.baseUrl() + 'forgot_password.php?email=$email';
+    
+    print('Forgot password API URL: $url');
 
-    final request = http.MultipartRequest('GET', Uri.parse(url));
-    var res = await request.send();
-    var response = await res.stream.bytesToString();
-    dynamic data = jsonDecode(response);
-
-    return data;
+    try {
+      final response = await http.get(Uri.parse(url), headers: {
+        'Content-Type': 'application/json',
+      });
+      
+      print('Forgot password response status: ${response.statusCode}');
+      print('Forgot password response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        dynamic data = jsonDecode(response.body);
+        return data;
+      } else {
+        return {
+          'success': 'false',
+          'msg': 'Server error: ${response.statusCode}'
+        };
+      }
+    } catch (e) {
+      print('Forgot password API error: $e');
+      return {
+        'success': 'false',
+        'msg': 'Network error: $e'
+      };
+    }
   }
 
   Future buyerHomeDemoApi() async {

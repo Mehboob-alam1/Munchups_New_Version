@@ -173,12 +173,25 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                       buttonName: 'OK',
                       buttonBGColor: DynamicColor.primaryColor,
                       onPressed: () {
+                        Navigator.of(context).pop(); // Close dialog first
+                        
+                        // Save pending data for OTP verification
+                        final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
+                        authFlowProvider.savePendingUserData(
+                          {'email': emilController.text.trim()}, 
+                          emilController.text.trim(), 
+                          'forgot_password'
+                        );
+                        authFlowProvider.setCurrentStep('otp');
+                        
+                        // Navigate to OTP screen
                         PageNavigateScreen().push(
-                            context,
-                            OtpPage(
-                              emailId: emilController.text.trim(),
-                              type: 'forget Pass',
-                            ));
+                          context,
+                          OtpPage(
+                            emailId: emilController.text.trim(),
+                            type: 'forgot_password',
+                          )
+                        );
                       },
                       shap: 7)
                 ],
