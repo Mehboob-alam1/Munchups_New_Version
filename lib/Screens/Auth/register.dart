@@ -826,12 +826,12 @@ class _RegisterPageState extends State<RegisterPage> {
     
     try {
       await PostApiServer().registrationApi(body, imageFile).then((value) {
-        log(value.toString());
+        log('Registration response: $value');
         Utils().stopSpinner(context);
 
         if (value['success'] == 'true') {
           // Save pending user data for OTP verification
-          final authFlowProvider = context.read<AuthFlowProvider>();
+          final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
           authFlowProvider.savePendingUserData(body, emailID.trim(), 'register');
           authFlowProvider.setCurrentStep('register');
           
@@ -849,12 +849,17 @@ class _RegisterPageState extends State<RegisterPage> {
             );
           });
         } else {
-          Utils().myToast(context, msg: value['msg']);
+          log('Registration failed: ${value['msg']}');
+          Utils().myToast(context, msg: value['msg'] ?? 'Registration failed');
         }
+      }).catchError((error) {
+        log('Registration catchError: $error');
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Registration failed. Please try again.');
       });
     } catch (e) {
       Utils().stopSpinner(context);
-      log(e.toString());
+      log('Registration error: $e');
       Utils().myToast(context, msg: 'Registration failed. Please try again.');
     }
   }
