@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -157,12 +158,14 @@ class _OtpPageState extends State<OtpPage> {
         currentCode: otpCode,
         onCodeSubmitted: (code) {},
         onCodeChanged: (code) {
-          if (code!.length == 6) {
-            otpCode = code;
+          if (code != null && code.length == 6) {
+            setState(() {
+              otpCode = code;
+            });
+            // Auto-verify when 6 digits are entered (optional)
             // Timer(const Duration(seconds: 1), () {
-            //   verifyApiCall(context);
+            //   onPressedToNaxt();
             // });
-            FocusScope.of(context).requestFocus(FocusNode());
           }
         },
       ),
@@ -202,7 +205,17 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void onPressedToNaxt() {
-    if (otpCode.isNotEmpty) {
+    // Get OTP from both the controller and the otpCode variable
+    String currentOtp = _otpController.text.isNotEmpty ? _otpController.text : otpCode;
+    
+    print('Current OTP from controller: ${_otpController.text}');
+    print('Current OTP from variable: $otpCode');
+    print('Using OTP: $currentOtp');
+    
+    if (currentOtp.isNotEmpty && currentOtp.length == 6) {
+      // Update otpCode to ensure we have the latest value
+      otpCode = currentOtp;
+      
       if (widget.type == 'register') {
         verifyApiCall(context);
       } else if (widget.type == 'login') {
@@ -211,7 +224,7 @@ class _OtpPageState extends State<OtpPage> {
         verifyForgetPasswordApiCall(context);
       }
     } else {
-      Utils().myToast(context, msg: 'Please enter otp');
+      Utils().myToast(context, msg: 'Please enter a valid 6-digit OTP');
     }
   }
 
