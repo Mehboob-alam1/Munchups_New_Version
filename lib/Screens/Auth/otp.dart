@@ -308,11 +308,14 @@ void verifyApiCall(context) async {
 // For Forget Passwoord Process
   void verifyForgetPasswordApiCall(context) async {
     Utils().showSpinner(context);
-    final authFlowProvider = context.read<AuthFlowProvider>();
+    
+    // Fix: Use Provider.of instead of context.read
+    final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
     dynamic body = {
       'email': widget.emailId.toString(),
       'otp': otpCode,
     };
+    
     try {
       await PostApiServer().resetPasswordApi(body).then((value) {
         FocusScope.of(context).requestFocus(FocusNode());
@@ -334,7 +337,8 @@ void verifyApiCall(context) async {
     Utils().showSpinner(context);
 
     try {
-      final authFlowProvider = context.read<AuthFlowProvider>();
+      // Fix: Use Provider.of instead of context.read
+      final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
       await GetApiServer()
           .forgetPasswordApi(widget.emailId.toString())
           .then((value) {
@@ -355,8 +359,7 @@ void verifyApiCall(context) async {
         barrierDismissible: Platform.isAndroid ? false : true,
         builder: (context) {
           return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Image.asset(
               'assets/images/success.png',
               height: 100,
@@ -376,11 +379,13 @@ void verifyApiCall(context) async {
                   const SizedBox(height: 25),
                   CommanButton(
                       hight: 40.0,
-                      width:
-                          SizeConfig.getSizeWidthBy(context: context, by: 0.3),
+                      width: SizeConfig.getSizeWidthBy(context: context, by: 0.3),
                       buttonName: 'OK',
                       buttonBGColor: DynamicColor.primaryColor,
                       onPressed: () {
+                        // Fix: Close dialog first, then navigate
+                        Navigator.of(context).pop(); // Close dialog
+                        
                         PageNavigateScreen().push(
                             context,
                             ResetPasswordPage(
