@@ -359,24 +359,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget termsAndCondi() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('By continuing, you agree to our ', style: white15bold),
-        TextButton(
-          onPressed: () {
-            PageNavigateScreen().push(context, TermsAndConditonPage());
-          },
-          child: Text('Terms & Conditions', style: white15bold),
-        ),
-        Text(' and ', style: white15bold),
-        TextButton(
-          onPressed: () {
-            PageNavigateScreen().push(context, PrivacyPolicyPage());
-          },
-          child: Text('Privacy Policy', style: white15bold),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('By continuing, you agree to our ', style: white13w5),
+          TextButton(
+            onPressed: () {
+              PageNavigateScreen().push(context, TermsAndConditonPage());
+            },
+            child: Text('Terms & Conditions', style: white13w5),
+          ),
+          Text(' and ', style: white13w5),
+          TextButton(
+            onPressed: () {
+              PageNavigateScreen().push(context, PrivacyPolicyPage());
+            },
+            child: Text('Privacy Policy', style: white13w5),
+          ),
+        ],
+      ),
     );
   }
 }
