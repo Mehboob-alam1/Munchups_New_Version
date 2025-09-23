@@ -1,35 +1,16 @@
 import 'package:get_it/get_it.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:munchups_app/domain/usecases/auth/register_usecase.dart';
+import 'package:munchups_app/domain/usecases/auth/verify_otp_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../data/datasources/remote/api_service.dart';
-import '../../data/datasources/remote/network_info.dart';
-import '../../data/datasources/local/local_storage.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../data/repositories/cart_repository_impl.dart';
-import '../../data/repositories/data_repository_impl.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../../domain/repositories/cart_repository.dart';
-import '../../domain/repositories/data_repository.dart';
-import '../../domain/usecases/auth/login_usecase.dart';
-import '../../domain/usecases/auth/register_usecase.dart';
-import '../../domain/usecases/auth/verify_otp_usecase.dart';
-import '../../domain/usecases/auth/forgot_password_usecase.dart';
-import '../../domain/usecases/cart/add_to_cart_usecase.dart';
-import '../../domain/usecases/cart/remove_from_cart_usecase.dart';
-import '../../domain/usecases/cart/update_cart_usecase.dart';
-import '../../domain/usecases/data/fetch_home_data_usecase.dart';
-import '../../domain/usecases/data/fetch_user_profile_usecase.dart';
-import '../../domain/usecases/data/search_users_usecase.dart';
-import '../../domain/usecases/data/fetch_notifications_usecase.dart';
-import '../../presentation/providers/app_provider.dart';
-import '../../presentation/providers/auth_provider.dart';
-import '../../presentation/providers/cart_provider.dart';
-import '../../presentation/providers/data_provider.dart';
-// Add AuthFlowProvider import
-import '../../Component/providers/auth_flow_provider.dart';
-import '../../domain/usecases/auth/auth_flow_usecase.dart';
+import 'forgot_password_usecase.dart';
+import 'login_usecase.dart';
+import 'package:dartz/dartz.dart';
+import '../../repositories/auth_repository.dart';
+import '../../core/error/failures.dart';
+
 
 final GetIt sl = GetIt.instance;
 

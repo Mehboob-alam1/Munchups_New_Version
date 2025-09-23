@@ -128,10 +128,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, bool>> logout() async {
     try {
-      await localDataSource.clearUserData();
+      await localDataSource.logout();
       return const Right(true);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -183,10 +183,5 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> completeLogin(Map<String, dynamic> userData, String token) async {
     return await localDataSource.completeLogin(userData, token);
-  }
-
-  @override
-  Future<void> logout() async {
-    return await localDataSource.logout();
   }
 }

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../../domain/usecases/auth/auth_flow_usecase.dart';
 
 class AuthFlowProvider extends ChangeNotifier {
-  final AuthFlowUseCase _authFlowUseCase;
-  
-  AuthFlowProvider({required AuthFlowUseCase authFlowUseCase}) 
-      : _authFlowUseCase = authFlowUseCase;
-
   // Authentication states
   bool _isLoading = false;
   String _error = '';
@@ -148,13 +142,25 @@ class AuthFlowProvider extends ChangeNotifier {
 
   // Check if user account is verified
   Future<bool> isAccountVerified() async {
-    return await _authFlowUseCase.isAccountVerified();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? verificationStatus = prefs.getString('verification_status');
+      return verificationStatus == 'verified';
+    } catch (e) {
+      debugPrint('Error checking verification status: $e');
+      return false;
+    }
   }
 
   // Save verification status
   Future<void> saveVerificationStatus(String status) async {
-    await _authFlowUseCase.saveVerificationStatus(status);
-    notifyListeners();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('verification_status', status);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving verification status: $e');
+    }
   }
 
   // Complete registration flow
@@ -230,15 +236,20 @@ class AuthFlowProvider extends ChangeNotifier {
 
   // Logout
   Future<void> logout() async {
-    await _authFlowUseCase.logout();
-    
-    _currentStep = 'login';
-    _pendingUserData = {};
-    _pendingEmail = '';
-    _pendingType = '';
-    _error = '';
-    
-    notifyListeners();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      
+      _currentStep = 'login';
+      _pendingUserData = {};
+      _pendingEmail = '';
+      _pendingType = '';
+      _error = '';
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error during logout: $e');
+    }
   }
 
   // Get the next screen based on current state

@@ -250,21 +250,18 @@ void verifyApiCall(context) async {
       Utils().stopSpinner(context);
 
       if (value['success'] == 'true' || value['success'] == true) {
-        print('OTP verification successful');
-        Utils().stopSpinner(context);
-        
-        // Handle OTP success
-        final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
-        await authFlowProvider.handleOtpSuccess();
-        
+        // Mark account as verified
+        authFlowProvider.saveVerificationStatus('verified');
+
+        // Complete registration
+        authFlowProvider.completeRegistration();
+
         Utils().myToast(context, msg: 'Account verified successfully!');
-        
-        // Navigate based on the flow
-        if (widget.type == 'register') {
+
+        // Navigate to login
+        Timer(const Duration(milliseconds: 600), () {
           PageNavigateScreen().pushRemovUntil(context, LoginPage());
-        } else if (widget.type == 'login') {
-          PageNavigateScreen().pushRemovUntil(context, HomePage());
-        }
+        });
       } else {
         print('OTP verification failed: ${value['msg']}');
         Utils().myToast(context, msg: value['msg'] ?? 'Verification failed');

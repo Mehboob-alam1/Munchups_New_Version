@@ -12,6 +12,12 @@ import 'package:munchups_app/presentation/providers/auth_provider.dart';
 import 'package:munchups_app/presentation/providers/cart_provider.dart';
 import 'package:munchups_app/presentation/providers/data_provider.dart';
 import 'Component/providers/auth_flow_provider.dart';
+import 'package:munchups_app/presentation/pages/auth/login_page.dart';
+import 'package:munchups_app/presentation/pages/auth/register_page.dart';
+import 'package:munchups_app/presentation/pages/auth/otp_page.dart';
+import 'package:munchups_app/presentation/pages/auth/forget_password_page.dart';
+import 'package:munchups_app/presentation/pages/auth/reset_password_page.dart';
+import 'package:munchups_app/presentation/pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
