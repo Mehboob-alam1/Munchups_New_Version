@@ -10,4 +10,8 @@ abstract class AuthRepository {
   Future<Either<Failure, bool>> logout();
   Future<Either<Failure, bool>> isLoggedIn();
   Future<Either<Failure, Map<String, dynamic>>> getCurrentUser();
+  Future<bool> isAccountVerified();
+  Future<void> saveVerificationStatus(String status);
+  Future<void> completeRegistration(Map<String, dynamic> userData);
+  Future<void> completeLogin(Map<String, dynamic> userData, String token);
 }

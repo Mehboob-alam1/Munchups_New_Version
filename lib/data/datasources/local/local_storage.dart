@@ -13,6 +13,11 @@ abstract class LocalDataSource {
   Future<List<Map<String, dynamic>>> getCartData();
   Future<void> saveLocationData(Map<String, dynamic> locationData);
   Future<Map<String, dynamic>?> getLocationData();
+  Future<bool> isAccountVerified();
+  Future<void> saveVerificationStatus(String status);
+  Future<void> completeRegistration(Map<String, dynamic> userData);
+  Future<void> completeLogin(Map<String, dynamic> userData, String token);
+  Future<void> logout();
 }
 
 class LocalDataSourceImpl implements LocalDataSource {
@@ -88,5 +93,41 @@ class LocalDataSourceImpl implements LocalDataSource {
       return jsonDecode(data);
     }
     return null;
+  }
+
+  @override
+  Future<bool> isAccountVerified() async {
+    try {
+      String? verificationStatus = await sharedPreferences.getString('verification_status');
+      return verificationStatus == 'verified';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> saveVerificationStatus(String status) async {
+    await sharedPreferences.setString('verification_status', status);
+  }
+
+  @override
+  Future<void> completeRegistration(Map<String, dynamic> userData) async {
+    await sharedPreferences.setString('data', jsonEncode(userData));
+    await sharedPreferences.setString('user_type', userData['user_type'] ?? '');
+    await sharedPreferences.setString('verification_status', 'verified');
+    await sharedPreferences.setString('auth_token', userData['token'] ?? '');
+  }
+
+  @override
+  Future<void> completeLogin(Map<String, dynamic> userData, String token) async {
+    await sharedPreferences.setString('data', jsonEncode(userData));
+    await sharedPreferences.setString('user_type', userData['user_type'] ?? '');
+    await sharedPreferences.setString('verification_status', 'verified');
+    await sharedPreferences.setString('auth_token', token);
+  }
+
+  @override
+  Future<void> logout() async {
+    await sharedPreferences.clear();
   }
 }

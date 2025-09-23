@@ -829,27 +829,39 @@ class _RegisterPageState extends State<RegisterPage> {
         log('Registration response: $value');
         Utils().stopSpinner(context);
 
-        if (value['success'] == 'true') {
-          // Save pending user data for OTP verification
-          final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
-          authFlowProvider.savePendingUserData(body, emailID.trim(), 'register');
-          authFlowProvider.setCurrentStep('register');
+        if (value['success'] == 'true' || value['success'] == true) {
+          print('Registration successful');
+          Utils().stopSpinner(context);
           
-          addressController.text = '';
-          saveUserCountry(countrySortName, countrySymbol);
+          // Save user data and start OTP verification
+          final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
+          authFlowProvider.startRegistration(
+            {
+              'user_id': value['user_id'],
+              'first_name': value['first_name'],
+              'last_name': value['last_name'],
+              'user_name': value['user_name'],
+              'email': value['email'],
+              'phone': value['phone'],
+              'user_type': value['user_type'],
+              'image': value['image'],
+            },
+            emailID.trim(),
+          );
+          
           Utils().myToast(context, msg: 'Registration successful! Please verify your email.');
           
-          Timer(const Duration(milliseconds: 600), () {
-            PageNavigateScreen().push(
-              context,
-              OtpPage(
-                emailId: emailID.trim(),
-                type: 'register',
-              )
-            );
-          });
+          // Navigate to OTP screen
+          PageNavigateScreen().push(
+            context,
+            OtpPage(
+              emailId: emailID.trim(),
+              type: 'register',
+            ),
+          );
         } else {
-          log('Registration failed: ${value['msg']}');
+          // Handle error
+          Utils().stopSpinner(context);
           Utils().myToast(context, msg: value['msg'] ?? 'Registration failed');
         }
       }).catchError((error) {

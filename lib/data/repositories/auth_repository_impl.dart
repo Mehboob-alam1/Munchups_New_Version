@@ -164,4 +164,29 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(CacheFailure(e.toString()));
     }
   }
+
+  @override
+  Future<bool> isAccountVerified() async {
+    return await localDataSource.isAccountVerified();
+  }
+
+  @override
+  Future<void> saveVerificationStatus(String status) async {
+    return await localDataSource.saveVerificationStatus(status);
+  }
+
+  @override
+  Future<void> completeRegistration(Map<String, dynamic> userData) async {
+    return await localDataSource.completeRegistration(userData);
+  }
+
+  @override
+  Future<void> completeLogin(Map<String, dynamic> userData, String token) async {
+    return await localDataSource.completeLogin(userData, token);
+  }
+
+  @override
+  Future<void> logout() async {
+    return await localDataSource.logout();
+  }
 }

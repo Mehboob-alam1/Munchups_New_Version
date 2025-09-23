@@ -310,25 +310,22 @@ class _LoginPageState extends State<LoginPage> {
         
         if (errorMessage.contains('Please activate your account') || 
             errorMessage.contains('not_activated')) {
-          // Account exists but not verified, send OTP first then redirect
+          print('Account not activated, starting OTP verification');
+          
+          // Start login verification flow
+          final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
+          await authFlowProvider.startLoginVerification(emailID);
+          
+          // Send OTP for login verification
           await _sendOtpForLoginVerification();
           
-          // Save pending data and redirect to OTP
-          authFlowProvider.savePendingUserData(
-            {'email': emailID}, // Save minimal data for OTP
-            emailID, 
-            'login'
-          );
-          authFlowProvider.setCurrentStep('otp');
-          
-          Utils().myToast(context, msg: 'OTP sent to your email. Please verify your account.');
-          
+          // Navigate to OTP screen
           PageNavigateScreen().push(
             context,
             OtpPage(
               emailId: emailID,
               type: 'login',
-            )
+            ),
           );
         }
         // If it's a different error, the authProvider.error will be shown
