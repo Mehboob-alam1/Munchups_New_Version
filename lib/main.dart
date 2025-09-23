@@ -12,12 +12,14 @@ import 'package:munchups_app/presentation/providers/auth_provider.dart';
 import 'package:munchups_app/presentation/providers/cart_provider.dart';
 import 'package:munchups_app/presentation/providers/data_provider.dart';
 import 'Component/providers/auth_flow_provider.dart';
-import 'package:munchups_app/presentation/pages/auth/login_page.dart';
-import 'package:munchups_app/presentation/pages/auth/register_page.dart';
-import 'package:munchups_app/presentation/pages/auth/otp_page.dart';
-import 'package:munchups_app/presentation/pages/auth/forget_password_page.dart';
-import 'package:munchups_app/presentation/pages/auth/reset_password_page.dart';
-import 'package:munchups_app/presentation/pages/home_page.dart';
+
+// Import the actual screen files (correct paths)
+import 'Screens/Auth/login.dart';
+import 'Screens/Auth/register.dart';
+import 'Screens/Auth/otp.dart';
+import 'Screens/Auth/forgot_pass.dart';
+import 'Screens/Auth/reset_password.dart';
+import 'Screens/Buyer/Home/buyer_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,24 +134,24 @@ class _AuthWrapperState extends State<AuthWrapper> {
         
         switch (nextScreen) {
           case 'login':
-            return const LoginPage();
+            return LoginPage();
           case 'register':
-            return const RegisterPage();
+            return RegisterPage();
           case 'otp':
             return OtpPage(
               emailId: authProvider.getOtpEmail(),
               type: authProvider.getOtpType(),
             );
           case 'forgot_password':
-            return const ForgetPasswordPage();
+            return ForgetPasswordPage();
           case 'reset_password':
             return ResetPasswordPage(
               email: authProvider.getOtpEmail(),
             );
           case 'home':
-            return const HomePage(); // Your main app screen
+            return BuyerHomePage(); // Use the actual home page
           default:
-            return const LoginPage();
+            return LoginPage();
         }
       },
     );
