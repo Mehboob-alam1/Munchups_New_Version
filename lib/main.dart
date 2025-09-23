@@ -127,7 +127,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return Consumer<AuthFlowProvider>(
       builder: (context, authProvider, child) {
         if (!authProvider.isInitialized) {
-          return const SplashScreen(); // Show splash while initializing
+          return const SplashPage(); // Show splash while initializing
         }
 
         String nextScreen = authProvider.getNextScreen();
@@ -147,6 +147,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           case 'reset_password':
             return ResetPasswordPage(
               email: authProvider.getOtpEmail(),
+              otp: '',
             );
           case 'home':
             return BuyerHomePage(); // Use the actual home page

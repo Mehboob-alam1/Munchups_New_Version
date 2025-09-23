@@ -49,8 +49,8 @@ class _OtpPageState extends State<OtpPage> {
     super.initState();
     listenOtp();
     
-    // Automatically send OTP when screen opens for login verification
-    if (widget.type == 'login') {
+    // Automatically send OTP when screen opens for both login and register verification
+    if (widget.type == 'login' || widget.type == 'register') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         resendOTPApiCall(context);
       });
@@ -282,17 +282,32 @@ void verifyApiCall(context) async {
     Utils().showSpinner(context);
 
     try {
-      final authFlowProvider = context.read<AuthFlowProvider>();
+      // Fix: Use Provider.of instead of context.read
+      final authFlowProvider = Provider.of<AuthFlowProvider>(context, listen: false);
+      
+      print('Sending OTP for ${widget.type} to ${widget.emailId}');
+      
       await GetApiServer()
           .resendOtpApi(widget.emailId.toString())
           .then((value) {
+        print('Resend OTP response: $value');
         FocusScope.of(context).requestFocus(FocusNode());
         Utils().stopSpinner(context);
-        Utils().myToast(context, msg: value['msg']);
+        
+        if (value['success'] == 'true' || value['success'] == true) {
+          Utils().myToast(context, msg: 'OTP sent successfully! Please check your email.');
+        } else {
+          Utils().myToast(context, msg: value['msg'] ?? 'Failed to send OTP. Please try again.');
+        }
+      }).catchError((error) {
+        print('Resend OTP catchError: $error');
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Network error. Please try again.');
       });
     } catch (e) {
+      print('Resend OTP error: $e');
       Utils().stopSpinner(context);
-      log(e.toString());
+      Utils().myToast(context, msg: 'An error occurred. Please try again.');
     }
   }
 
