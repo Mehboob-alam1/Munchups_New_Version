@@ -163,17 +163,62 @@ class _EditChefPostDishFormState extends State<EditChefPostDishForm> {
     selectedDiliveryRange = dishData['criteria'];
     price = dishData['dish_price'];
     description = dishData['dish_description'];
-    if (dishData['dish_images'] != 'NA') {
-      if (dishData['dish_images'].length >= 1) {
-        networkImage1 = dishData['dish_images'][0]['kitchen_image'];
-      }
-      if (dishData['dish_images'].length >= 2) {
-        networkImage2 = dishData['dish_images'][1]['kitchen_image'];
-      }
-      if (dishData['dish_images'].length >= 3) {
-        networkImage3 = dishData['dish_images'][2]['kitchen_image'];
+    final normalizedImages = _normalizeImages(dishData['dish_images']);
+    print('EditDishForm: normalized images=$normalizedImages');
+    if (normalizedImages.isNotEmpty) {
+      networkImage1 = (normalizedImages.length >= 1
+          ? normalizedImages[0]['kitchen_image']
+          : null)!;
+      networkImage2 = (normalizedImages.length >= 2
+          ? normalizedImages[1]['kitchen_image']
+          : null)!;
+      networkImage3 = (normalizedImages.length >= 3
+          ? normalizedImages[2]['kitchen_image']
+          : null)!;
+    }
+  }
+
+  List<Map<String, String>> _normalizeImages(dynamic source) {
+    final List<Map<String, String>> images = [];
+
+    void addImage(dynamic entry) {
+      if (entry is Map && entry['kitchen_image'] != null) {
+        images.add({'kitchen_image': entry['kitchen_image'].toString()});
+      } else if (entry is String && entry.trim().isNotEmpty) {
+        images.add({'kitchen_image': entry.trim()});
       }
     }
+
+    if (source is String) {
+      final trimmed = source.trim();
+      if (trimmed.isEmpty || trimmed.toUpperCase() == 'NA') {
+        return images;
+      }
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is List) {
+          for (final entry in decoded) {
+            addImage(entry);
+          }
+        } else if (decoded is Map) {
+          for (final entry in decoded.values) {
+            addImage(entry);
+          }
+        }
+      } catch (e) {
+        log('Unable to decode dish_images string: $e');
+      }
+    } else if (source is List) {
+      for (final entry in source) {
+        addImage(entry);
+      }
+    } else if (source is Map) {
+      for (final entry in source.values) {
+        addImage(entry);
+      }
+    }
+
+    return images;
   }
 
   @override

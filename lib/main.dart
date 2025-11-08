@@ -11,6 +11,8 @@ import 'package:munchups_app/presentation/providers/app_provider.dart';
 import 'package:munchups_app/presentation/providers/auth_provider.dart';
 import 'package:munchups_app/presentation/providers/cart_provider.dart';
 import 'package:munchups_app/presentation/providers/data_provider.dart';
+import 'package:munchups_app/presentation/providers/chef_provider.dart';
+import 'package:munchups_app/presentation/providers/settings_provider.dart';
 import 'Component/providers/auth_flow_provider.dart';
 
 // Import the actual screen files (correct paths)
@@ -69,6 +71,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<CartProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<DataProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<SettingsProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<ChefProvider>()),
         // Use DI for AuthFlowProvider
         ChangeNotifierProvider(create: (_) => di.sl<AuthFlowProvider>()),
       ],

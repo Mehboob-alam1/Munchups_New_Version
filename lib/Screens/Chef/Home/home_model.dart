@@ -23,15 +23,29 @@ class ChefHomeListModel {
     required this.notificationCount,
   });
 
-  factory ChefHomeListModel.fromJson(Map<String, dynamic> json) =>
-      ChefHomeListModel(
-        success: json["success"],
-        msg: json["msg"],
-        ocCategoryOrderArr: List<OcCategoryOrderArr>.from(
-            json["oc_category_order_arr"]
-                .map((x) => OcCategoryOrderArr.fromJson(x))),
-        notificationCount: json["notification_count"],
-      );
+  factory ChefHomeListModel.fromJson(Map<String, dynamic> json) {
+    final dynamic rawList = json["oc_category_order_arr"];
+    final List<OcCategoryOrderArr> list = <OcCategoryOrderArr>[];
+
+    if (rawList is List) {
+      for (final item in rawList) {
+        if (item is Map<String, dynamic>) {
+          list.add(OcCategoryOrderArr.fromJson(item));
+        } else if (item is Map) {
+          list.add(OcCategoryOrderArr.fromJson(
+              Map<String, dynamic>.from(item as Map)));
+        }
+      }
+    }
+
+    return ChefHomeListModel(
+      success: json["success"]?.toString() ?? 'false',
+      msg: json["msg"]?.toString() ?? '',
+      ocCategoryOrderArr: list,
+      notificationCount:
+          int.tryParse(json["notification_count"]?.toString() ?? '0') ?? 0,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "success": success,
@@ -95,29 +109,31 @@ class OcCategoryOrderArr {
 
   factory OcCategoryOrderArr.fromJson(Map<String, dynamic> json) =>
       OcCategoryOrderArr(
-        foodId: json["food_id"],
-        occasionCategoryId: json["occasion_category_id"],
-        buyerId: json["buyer_id"],
+        foodId: int.tryParse(json["food_id"]?.toString() ?? '0') ?? 0,
+        occasionCategoryId:
+            int.tryParse(json["occasion_category_id"]?.toString() ?? '0') ?? 0,
+        buyerId: int.tryParse(json["buyer_id"]?.toString() ?? '0') ?? 0,
         proposalId: json["proposal_id"],
-        proposalStatus: json["proposal_status"],
-        occasionCategoryName: json["occasion_category_name"],
-        foodCateName: json["food_cate_name"],
-        noOfPeople: json["no_of_people"],
-        serviceType: json["service_type"],
-        budget: json["budget"],
-        endDate: json["end_date"],
-        startDate: json["start_date"],
-        occasionTime: json["occasion_time"],
-        location: json["location"],
-        postalCode: json["postal_code"],
-        description: json["description"],
-        personalOccasionName: json["personal_occasion_name"],
-        firstName: json["first_name"],
-        image: json["image"],
-        lastName: json["last_name"],
-        userName: json["user_name"],
-        emailId: json["email_id"],
-        phone: json["phone"],
+        proposalStatus: json["proposal_status"]?.toString() ?? '',
+        occasionCategoryName: json["occasion_category_name"]?.toString() ?? '',
+        foodCateName: json["food_cate_name"]?.toString() ?? '',
+        noOfPeople: json["no_of_people"]?.toString() ?? '',
+        serviceType: json["service_type"]?.toString() ?? '',
+        budget: json["budget"]?.toString() ?? '',
+        endDate: json["end_date"]?.toString() ?? '',
+        startDate: json["start_date"]?.toString() ?? '',
+        occasionTime: json["occasion_time"]?.toString() ?? '',
+        location: json["location"]?.toString() ?? '',
+        postalCode: json["postal_code"]?.toString() ?? '',
+        description: json["description"]?.toString() ?? '',
+        personalOccasionName:
+            json["personal_occasion_name"]?.toString() ?? '',
+        firstName: json["first_name"]?.toString() ?? '',
+        image: json["image"]?.toString() ?? '',
+        lastName: json["last_name"]?.toString() ?? '',
+        userName: json["user_name"]?.toString() ?? '',
+        emailId: json["email_id"]?.toString() ?? '',
+        phone: json["phone"]?.toString() ?? '',
       );
 
   Map<String, dynamic> toJson() => {

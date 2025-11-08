@@ -9,9 +9,11 @@ import '../../data/datasources/local/local_storage.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/cart_repository_impl.dart';
 import '../../data/repositories/data_repository_impl.dart';
+import '../../data/repositories/chef_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/cart_repository.dart';
 import '../../domain/repositories/data_repository.dart';
+import '../../domain/repositories/chef_repository.dart';
 import '../../domain/usecases/auth/login_usecase.dart';
 import '../../domain/usecases/auth/register_usecase.dart';
 import '../../domain/usecases/auth/verify_otp_usecase.dart';
@@ -23,10 +25,20 @@ import '../../domain/usecases/data/fetch_home_data_usecase.dart';
 import '../../domain/usecases/data/fetch_user_profile_usecase.dart';
 import '../../domain/usecases/data/search_users_usecase.dart';
 import '../../domain/usecases/data/fetch_notifications_usecase.dart';
+import '../../domain/usecases/data/fetch_app_content_usecase.dart';
+import '../../domain/usecases/data/fetch_faq_content_usecase.dart';
+import '../../domain/usecases/data/change_password_usecase.dart';
+import '../../domain/usecases/data/submit_contact_usecase.dart';
+import '../../domain/usecases/data/update_profile_usecase.dart';
+import '../../domain/usecases/chef/fetch_chef_dashboard_usecase.dart';
+import '../../domain/usecases/chef/fetch_chef_orders_usecase.dart';
+import '../../domain/usecases/chef/fetch_chef_followers_usecase.dart';
 import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/providers/cart_provider.dart';
 import '../../presentation/providers/data_provider.dart';
+import '../../presentation/providers/chef_provider.dart';
+import '../../presentation/providers/settings_provider.dart';
 // Add AuthFlowProvider import
 import '../../Component/providers/auth_flow_provider.dart';
 import '../../domain/usecases/auth/auth_flow_usecase.dart';
@@ -51,6 +63,14 @@ Future<void> init() async {
   sl.registerLazySingleton(() => FetchUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => SearchUsersUseCase(sl()));
   sl.registerLazySingleton(() => FetchNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => FetchAppContentUseCase(sl()));
+  sl.registerLazySingleton(() => FetchFaqContentUseCase(sl()));
+  sl.registerLazySingleton(() => ChangePasswordUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitContactUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
+  sl.registerLazySingleton(() => FetchChefDashboardUseCase(sl()));
+  sl.registerLazySingleton(() => FetchChefOrdersUseCase(sl()));
+  sl.registerLazySingleton(() => FetchChefFollowersUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
@@ -69,6 +89,12 @@ Future<void> init() async {
     () => DataRepositoryImpl(
       remoteDataSource: sl(),
       localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+  sl.registerLazySingleton<ChefRepository>(
+    () => ChefRepositoryImpl(
+      remoteDataSource: sl(),
       networkInfo: sl(),
     ),
   );
@@ -108,6 +134,18 @@ Future<void> init() async {
         fetchUserProfileUseCase: sl(),
         searchUsersUseCase: sl(),
         fetchNotificationsUseCase: sl(),
+      ));
+  sl.registerFactory(() => SettingsProvider(
+        fetchAppContentUseCase: sl(),
+        fetchFaqContentUseCase: sl(),
+        changePasswordUseCase: sl(),
+        submitContactUseCase: sl(),
+        updateProfileUseCase: sl(),
+      ));
+  sl.registerFactory(() => ChefProvider(
+        fetchChefDashboardUseCase: sl(),
+        fetchChefOrdersUseCase: sl(),
+        fetchChefFollowersUseCase: sl(),
       ));
   
   // Register AuthFlowProvider

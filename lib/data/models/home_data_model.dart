@@ -1,21 +1,43 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'home_data_model.g.dart';
-
-@JsonSerializable()
 class HomeDataModel {
-  final List<dynamic>? data;
-  final List<dynamic>? chefs;
-  final List<dynamic>? grocers;
+  final bool success;
+  final String message;
+  final List<dynamic> chefs;
+  final List<dynamic> grocers;
+  final Map<String, dynamic> raw;
 
   HomeDataModel({
-    this.data,
-    this.chefs,
-    this.grocers,
+    required this.success,
+    required this.message,
+    required this.chefs,
+    required this.grocers,
+    required this.raw,
   });
 
-  factory HomeDataModel.fromJson(Map<String, dynamic> json) =>
-      _$HomeDataModelFromJson(json);
+  factory HomeDataModel.fromJson(Map<String, dynamic> json) {
+    final bool isSuccess = json['success']?.toString().toLowerCase() == 'true';
+    final String message = json['msg']?.toString() ?? '';
 
-  Map<String, dynamic> toJson() => _$HomeDataModelToJson(this);
+    List<dynamic> _parseList(dynamic value) {
+      if (value == null || value == 'NA') {
+        return <dynamic>[];
+      }
+      if (value is List) {
+        return value;
+      }
+      return <dynamic>[];
+    }
+
+    // The API sometimes returns `all_grocery` or `all_grocer`.
+    final List<dynamic> grocerList = _parseList(
+      json['all_grocery'] ?? json['all_grocer'],
+    );
+
+    return HomeDataModel(
+      success: isSuccess,
+      message: message,
+      chefs: _parseList(json['all_chef']),
+      grocers: grocerList,
+      raw: json,
+    );
+  }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:munchups_app/Apis/get_apis.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/exit_page.dart';
 import 'package:munchups_app/Component/Strings/strings.dart';
@@ -8,9 +7,11 @@ import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Component/styles/styles.dart';
 import 'package:munchups_app/Component/utils/notify_count.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_posted_list.dart';
-import 'package:munchups_app/Screens/Chef/Home/home_model.dart';
 import 'package:munchups_app/Screens/Notification/notification.dart';
 import 'package:munchups_app/Screens/drawer.dart';
+import 'package:provider/provider.dart';
+import 'package:munchups_app/presentation/providers/chef_provider.dart';
+import 'package:munchups_app/Screens/Chef/Home/home_model.dart';
 
 class ChefHomePage extends StatefulWidget {
   const ChefHomePage({super.key});
@@ -28,6 +29,9 @@ class _ChefHomePageState extends State<ChefHomePage> {
   void initState() {
     super.initState();
     notificationController.startTimer(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChefProvider>().loadDashboard(forceRefresh: true);
+    });
   }
 
   @override
@@ -111,29 +115,56 @@ class _ChefHomePageState extends State<ChefHomePage> {
             ),
           ),
         ),
-        body: FutureBuilder<ChefHomeListModel>(
-            future: GetApiServer().getChefHomeListApi(),
-            builder: (context, snapshot) {
-              switch (snapshot.connectionState) {
-                case ConnectionState.waiting:
-                  return const Center(
-                      child: CircularProgressIndicator(
-                    color: DynamicColor.primaryColor,
-                  ));
-                default:
-                  if (snapshot.hasError) {
-                    return const Center(child: Text('No Order available!'));
-                  } else if (snapshot.data!.success != 'true') {
-                    return const Center(child: Text('No Order available!'));
-                  } else if (snapshot.data!.ocCategoryOrderArr == 'NA') {
-                    return const Center(child: Text('No Order available'));
-                  } else {
-                    return ChefsPostedListPage(
-                      list: snapshot.data!.ocCategoryOrderArr,
-                    );
-                  }
-              }
-            }),
+        body: Consumer<ChefProvider>(
+          builder: (context, chefProvider, child) {
+            if (chefProvider.isDashboardLoading &&
+                chefProvider.dashboardOccasions.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: DynamicColor.primaryColor,
+                ),
+              );
+            }
+
+            if (chefProvider.dashboardError.isNotEmpty &&
+                chefProvider.dashboardOccasions.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      chefProvider.dashboardError,
+                      style: white15bold,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () =>
+                          chefProvider.loadDashboard(forceRefresh: true),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (chefProvider.dashboardOccasions.isEmpty) {
+              return const Center(child: Text('No Order available'));
+            }
+
+            final List<OcCategoryOrderArr> occasions =
+                chefProvider.dashboardOccasions;
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                await chefProvider.loadDashboard(forceRefresh: true);
+              },
+              child: ChefsPostedListPage(
+                list: occasions,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

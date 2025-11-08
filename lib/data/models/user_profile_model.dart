@@ -1,21 +1,51 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'dart:convert';
 
-part 'user_profile_model.g.dart';
-
-@JsonSerializable()
 class UserProfileModel {
   final String success;
   final String? msg;
   final Map<String, dynamic>? data;
+  final Map<String, dynamic>? raw;
 
   UserProfileModel({
     required this.success,
     this.msg,
     this.data,
+    this.raw,
   });
 
-  factory UserProfileModel.fromJson(Map<String, dynamic> json) =>
-      _$UserProfileModelFromJson(json);
+  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? parseData(dynamic value) {
+      if (value is Map<String, dynamic>) {
+        return value;
+      }
+      if (value is Map) {
+        return Map<String, dynamic>.from(value as Map);
+      }
+      if (value is String) {
+        try {
+          final decoded = jsonDecode(value);
+          if (decoded is Map) {
+            return Map<String, dynamic>.from(decoded as Map);
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
 
-  Map<String, dynamic> toJson() => _$UserProfileModelToJson(this);
+    final profileData = parseData(json['profile_data']);
+    final data = parseData(json['data']) ?? profileData ?? {};
+
+    return UserProfileModel(
+      success: json['success']?.toString() ?? 'false',
+      msg: json['msg']?.toString(),
+      data: data,
+      raw: json,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'success': success,
+        'msg': msg,
+        'data': data,
+      };
 }

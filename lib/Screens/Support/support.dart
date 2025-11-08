@@ -75,7 +75,7 @@ class _SupportPageState extends State<SupportPage> {
               iconData: Icons.contact_support,
               title: TextStrings.textKey['faq']!,
               onTap: () {
-                PageNavigateScreen().push(context, const FAQPage());
+                PageNavigateScreen().push(context, const FaqPage());
               }),
           const Divider(height: 10, color: DynamicColor.white),
         ],

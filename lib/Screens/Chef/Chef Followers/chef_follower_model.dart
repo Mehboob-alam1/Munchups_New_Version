@@ -16,7 +16,7 @@ class ChefFollowingsListModel {
   int followersCount;
   List<ChefFollowersDetail> followersDetails;
   int followingCounts;
-  String followingsDetails;
+  List<dynamic> followingsDetails;
 
   ChefFollowingsListModel({
     required this.success,
@@ -27,17 +27,37 @@ class ChefFollowingsListModel {
     required this.followingsDetails,
   });
 
-  factory ChefFollowingsListModel.fromJson(Map<String, dynamic> json) =>
-      ChefFollowingsListModel(
-        success: json["success"],
-        msg: json["msg"],
-        followersCount: json["followers_count"],
-        followersDetails: List<ChefFollowersDetail>.from(
-            json["followers_details"]
-                .map((x) => ChefFollowersDetail.fromJson(x))),
-        followingCounts: json["following_counts"],
-        followingsDetails: json["followings_details"],
-      );
+  factory ChefFollowingsListModel.fromJson(Map<String, dynamic> json) {
+    final dynamic rawFollowers = json["followers_details"];
+    final List<ChefFollowersDetail> followerList = <ChefFollowersDetail>[];
+    if (rawFollowers is List) {
+      for (final item in rawFollowers) {
+        if (item is Map<String, dynamic>) {
+          followerList.add(ChefFollowersDetail.fromJson(item));
+        } else if (item is Map) {
+          followerList.add(ChefFollowersDetail.fromJson(
+              Map<String, dynamic>.from(item as Map)));
+        }
+      }
+    }
+
+    final dynamic rawFollowings = json["followings_details"];
+    final List<dynamic> followings = <dynamic>[];
+    if (rawFollowings is List) {
+      followings.addAll(rawFollowings);
+    }
+
+    return ChefFollowingsListModel(
+      success: json["success"]?.toString() ?? 'false',
+      msg: json["msg"]?.toString() ?? '',
+      followersCount:
+          int.tryParse(json["followers_count"]?.toString() ?? '0') ?? 0,
+      followersDetails: followerList,
+      followingCounts:
+          int.tryParse(json["following_counts"]?.toString() ?? '0') ?? 0,
+      followingsDetails: followings,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "success": success,
@@ -71,13 +91,14 @@ class ChefFollowersDetail {
 
   factory ChefFollowersDetail.fromJson(Map<String, dynamic> json) =>
       ChefFollowersDetail(
-        followingId: json["following_id"],
-        firstName: json["first_name"],
-        lastName: json["last_name"],
-        image: json["image"],
-        address: json['address'],
-        phone: json['phone'],
-        fromUser: json["from_user"],
+        followingId:
+            int.tryParse(json["following_id"]?.toString() ?? '0') ?? 0,
+        firstName: json["first_name"]?.toString() ?? '',
+        lastName: json["last_name"]?.toString() ?? '',
+        image: json["image"]?.toString() ?? '',
+        address: json['address']?.toString() ?? '',
+        phone: json['phone']?.toString() ?? '',
+        fromUser: int.tryParse(json["from_user"]?.toString() ?? '0') ?? 0,
       );
 
   Map<String, dynamic> toJson() => {

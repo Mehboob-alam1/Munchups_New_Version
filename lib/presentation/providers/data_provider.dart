@@ -13,7 +13,7 @@ class DataProvider extends ChangeNotifier {
   String _error = '';
   
   // Home data
-  List<dynamic> _homeData = [];
+  Map<String, dynamic> _homeData = {};
   List<dynamic> _chefsList = [];
   List<dynamic> _grocersList = [];
   
@@ -44,7 +44,7 @@ class DataProvider extends ChangeNotifier {
   // Getters
   bool get isLoading => _isLoading;
   String get error => _error;
-  List<dynamic> get homeData => _homeData;
+  Map<String, dynamic> get homeData => _homeData;
   List<dynamic> get chefsList => _chefsList;
   List<dynamic> get grocersList => _grocersList;
   List<dynamic> get searchResults => _searchResults;
@@ -110,11 +110,20 @@ class DataProvider extends ChangeNotifier {
           _setError(failure.message);
         },
         (success) {
-          _homeData = success['data'] ?? [];
-          _chefsList = success['chefs'] ?? [];
-          _grocersList = success['grocers'] ?? [];
+          final bool isSuccessful = success['success'] == true;
+          if (!isSuccessful) {
+            _homeData = success['raw'] ?? {};
+            _chefsList = [];
+            _grocersList = [];
+            _setError(success['message']?.toString() ?? 'Failed to load home data');
+          } else {
+            _homeData = Map<String, dynamic>.from(success['raw'] ?? {});
+            _chefsList = List<dynamic>.from(success['chefs'] ?? const []);
+            _grocersList = List<dynamic>.from(success['grocers'] ?? const []);
+          }
         },
       );
+      notifyListeners();
     } catch (e) {
       _setError(e.toString());
       debugPrint('Error fetching home data: $e');
@@ -124,25 +133,75 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Profile methods
-  Future<void> fetchUserProfile() async {
+  Future<void> fetchUserProfile({bool forceRefresh = false}) async {
+    if (_userProfile.isNotEmpty && !forceRefresh) {
+      return;
+    }
+
     _setLoading(true);
     _setError('');
-    
+
     try {
-      // This would need the actual user ID and type
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userDataString = prefs.getString('data');
+      String? userType = prefs.getString('user_type');
+
+      if (userDataString == null || userType == null) {
+        throw Exception('No user data found');
+      }
+
+      Map<String, dynamic> userData = jsonDecode(userDataString);
+
       final result = await fetchUserProfileUseCase({
-        'userId': 'temp_user_id',
-        'userType': 'temp_user_type',
+        'userId': userData['user_id'].toString(),
+        'userType': userType,
       });
-      
+
+      Map<String, dynamic>? normalizedProfile;
+
+      Map<String, dynamic> _convertToMap(Map source) {
+        return source.map((key, value) => MapEntry(key.toString(), value));
+      }
+
       result.fold(
         (failure) {
           _setError(failure.message);
         },
         (success) {
-          _userProfile = success;
+          final data = success['data'];
+
+          if (data is Map<String, dynamic>) {
+            normalizedProfile = Map<String, dynamic>.from(data);
+          } else if (data is Map) {
+            normalizedProfile = _convertToMap(data);
+          } else if (data is List && data.isNotEmpty) {
+            final first = data.first;
+            if (first is Map<String, dynamic>) {
+              normalizedProfile = Map<String, dynamic>.from(first);
+            } else if (first is Map) {
+              normalizedProfile = _convertToMap(first);
+            }
+          } else if (success['profile_data'] is Map) {
+            normalizedProfile =
+                _convertToMap(success['profile_data'] as Map<dynamic, dynamic>);
+          }
+
+          if (normalizedProfile != null) {
+            _userProfile = {
+              'success': success['success'],
+              'msg': success['msg'],
+              'profile_data': normalizedProfile,
+            };
+          } else {
+            _userProfile = {};
+          }
         },
       );
+
+      if (normalizedProfile != null) {
+        // Persist latest profile snapshot for compatibility with legacy flows
+        await prefs.setString('data', jsonEncode(normalizedProfile));
+      }
     } catch (e) {
       _setError(e.toString());
       debugPrint('Error fetching user profile: $e');

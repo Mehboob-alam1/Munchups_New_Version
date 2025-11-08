@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:munchups_app/Apis/get_apis.dart';
-import 'package:munchups_app/Apis/post_apis.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/alert%20boxes/address_list_popup.dart';
 import 'package:munchups_app/Comman%20widgets/comman%20dopdown/foodCategory_dropdown.dart';
@@ -23,6 +21,10 @@ import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
 import 'package:munchups_app/Screens/Grocer/grocer_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:munchups_app/presentation/providers/data_provider.dart';
+import 'package:munchups_app/presentation/providers/settings_provider.dart';
+import 'package:munchups_app/domain/usecases/data/update_profile_usecase.dart';
 
 class BuyerProfilePage extends StatefulWidget {
   const BuyerProfilePage({super.key});
@@ -35,6 +37,7 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
   GlobalKey<FormState> globalKey = GlobalKey<FormState>();
 
   bool isLoading = false;
+  bool _providerApplied = false;
 
   String latitude = "51.5072";
   String longitude = "0.1276";
@@ -58,6 +61,20 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
 
   dynamic selectedProfession;
 
+  Map<String, dynamic> _mapFromAny(Map source) {
+    return source.map((key, value) => MapEntry(key.toString(), value));
+  }
+
+  Map<String, dynamic> _extractProfileData(Map<String, dynamic> source) {
+    if (source['profile_data'] is Map) {
+      return _mapFromAny(source['profile_data'] as Map);
+    }
+    if (source['data'] is Map) {
+      return _mapFromAny(source['data'] as Map);
+    }
+    return _mapFromAny(source);
+  }
+
   getUsertype() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -76,46 +93,66 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
   void initState() {
     super.initState();
     getUsertype();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<DataProvider>().fetchUserProfile(forceRefresh: true);
+      }
+    });
   }
 
-  void intData(value) async {
+  void intData(value, {bool fromProvider = false}) async {
     setState(() {
-      image = value['image'];
-      firstName = value['first_name'];
-      lastName = value['last_name'];
-      userName = value['user_name'];
-      emailID = value['email'];
-      mobileNo = value['phone'];
-      if (value['address'] != null) {
+      userData = value;
+      image = value['image'] ?? image;
+      firstName = value['first_name']?.toString() ?? firstName;
+      lastName = value['last_name']?.toString() ?? lastName;
+      userName = value['user_name']?.toString() ?? userName;
+      emailID = value['email']?.toString() ?? emailID;
+      mobileNo = value['phone']?.toString() ?? mobileNo;
+      if (value['address'] != null && value['address'] != 'NA') {
         addressController.text = value['address'];
       }
-      if (value['postal_code'] != null) {
-        postalCode = userData['postal_code'];
+      if (value['postal_code'] != null && value['postal_code'] != 'NA') {
+        postalCode = value['postal_code'].toString();
         getOnlineAddress(postalCode);
       }
       if (getUserType == 'chef') {
-        selectedProfession = value['profession_id'].toString();
-        if (value['category'] != 'NA') {
-          if (value['category'].length > 0) {
-            for (var element in value['category']) {
-              selectedFood.add(element['category_id']);
-            }
+        selectedProfession = value['profession_id']?.toString();
+        selectedFood.clear();
+        if (value['category'] is List) {
+          for (var element in value['category']) {
+            selectedFood.add(element['category_id']);
           }
         }
       }
       if (getUserType == 'grocer') {
-        shopName = value['shop_name'].toString();
+        shopName = value['shop_name']?.toString() ?? shopName;
       }
-      if (value['latitude'] != 'NA' && value['longitude'] != 'NA') {
-        latitude = value['latitude'];
-        longitude = value['longitude'];
+      if (value['latitude'] != null && value['latitude'] != 'NA') {
+        latitude = value['latitude'].toString();
+      }
+      if (value['longitude'] != null && value['longitude'] != 'NA') {
+        longitude = value['longitude'].toString();
+      }
+      if (fromProvider) {
+        _providerApplied = true;
       }
     });
-    Timer(const Duration(seconds: 1), () {
-      setState(() {
-        isLoading = false;
+
+    if (fromProvider) {
+      if (isLoading) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } else {
+      Timer(const Duration(seconds: 1), () {
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+        });
       });
-    });
+    }
   }
 
   @override
@@ -126,8 +163,21 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final dataProvider = context.watch<DataProvider>();
+    final profileFromProvider = _extractProfileData(dataProvider.userProfile);
+
+    if (!_providerApplied && profileFromProvider.isNotEmpty) {
+      _providerApplied = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        intData(profileFromProvider, fromProvider: true);
+      });
+    }
+
+    final isBusy = isLoading || (dataProvider.isLoading && !_providerApplied);
+
     return Scaffold(
-      body: isLoading
+      body: isBusy
           ? const Center(
               child:
                   CircularProgressIndicator(color: DynamicColor.primaryColor))
@@ -533,16 +583,21 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
         }
       });
     } catch (e) {
-      log(e.toString());
+      print('BuyerProfile: ${e.toString()}');
     }
   }
 
   void updateProfileApiCall(context) async {
     Utils().showSpinner(context);
-    dynamic body = {};
+    final dataProvider = context.read<DataProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+
+    Map<String, dynamic> body;
+    final userId = userData['user_id']?.toString() ?? '';
+
     if (getUserType == 'buyer') {
       body = {
-        'user_id': userData['user_id'].toString(),
+        'user_id': userId,
         'first_name': firstName.trim(),
         'last_name': lastName.trim(),
         'user_name': userName.trim(),
@@ -557,7 +612,7 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
       };
     } else if (getUserType == 'chef') {
       body = {
-        'user_id': userData['user_id'].toString(),
+        'user_id': userId,
         'first_name': firstName.trim(),
         'last_name': lastName.trim(),
         'user_name': userName.trim(),
@@ -565,7 +620,7 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
         'address': addressController.text.trim(),
         'mobile_number': mobileNo.trim(),
         'postal_code': postalCode.trim(),
-        'profession_id': selectedProfession.toString().trim(),
+        'profession_id': selectedProfession?.toString() ?? '',
         'category_id': jsonEncode(selectedFood),
         'player_id': playerID,
         'device_type': deviceType,
@@ -574,7 +629,7 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
       };
     } else {
       body = {
-        'user_id': userData['user_id'].toString(),
+        'user_id': userId,
         'first_name': firstName.trim(),
         'last_name': lastName.trim(),
         'user_name': userName.trim(),
@@ -589,37 +644,45 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
         'longitude': longitude.toString(),
       };
     }
-    try {
-      await PostApiServer().updateProfileApi(body, imageFile).then((value) {
-        FocusScope.of(context).requestFocus(FocusNode());
-        Utils().stopSpinner(context);
 
-        if (value['success'] == 'true') {
-          addressController.text = '';
-          Utils().myToast(context, msg: value['msg']);
+    try {
+      final params = UpdateProfileParams(
+        body: body,
+        imagePath: imageFile.path.isNotEmpty ? imageFile.path : null,
+      );
+      final success = await settingsProvider.updateProfile(params);
+      Utils().stopSpinner(context);
+
+      if (success) {
+        addressController.text = '';
+        _providerApplied = false;
+        await dataProvider.fetchUserProfile(forceRefresh: true);
+        final message = settingsProvider.submitMessage.isNotEmpty
+            ? settingsProvider.submitMessage
+            : 'Profile updated successfully';
+        Utils().myToast(context, msg: message);
+
+        Timer(const Duration(milliseconds: 600), () {
           if (getUserType == 'buyer') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const BuyerHomePage());
-            });
+            PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
           } else if (getUserType == 'chef') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const ChefHomePage());
-            });
+            PageNavigateScreen().pushRemovUntil(context, const ChefHomePage());
           } else {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const GrocerHomePage());
-            });
+            PageNavigateScreen().pushRemovUntil(context, const GrocerHomePage());
           }
-        } else {
-          Utils().myToast(context, msg: value['msg']);
-        }
-      });
+        });
+      } else {
+        final error = settingsProvider.submitError.isNotEmpty
+            ? settingsProvider.submitError
+            : 'Profile update failed';
+        Utils().myToast(context, msg: error);
+      }
     } catch (e) {
       Utils().stopSpinner(context);
-      log(e.toString());
+      Utils().myToast(context, msg: e.toString());
+      print('BuyerProfile: ${e.toString()}');
+    } finally {
+      settingsProvider.clearSubmitState();
     }
   }
 }

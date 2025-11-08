@@ -1,20 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/backgroundWidget.dart';
 import 'package:munchups_app/Comman%20widgets/comman_button/comman_botton.dart';
-import 'package:munchups_app/Component/Strings/strings.dart';
 import 'package:munchups_app/Component/color_class/color_class.dart';
-// import 'package:munchups_app/Component/providers/main_provider.dart';
 import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
 import 'package:munchups_app/Component/styles/styles.dart';
 import 'package:munchups_app/Component/utils/images_urls.dart';
 import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
-import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Auth/forgot_pass.dart';
 import 'package:munchups_app/Screens/Auth/register.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
@@ -23,7 +15,6 @@ import 'package:munchups_app/Screens/Grocer/grocer_home.dart';
 import 'package:munchups_app/Screens/Setting/privacy&policy.dart';
 import 'package:munchups_app/Screens/Setting/terms&con.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../Apis/get_apis.dart';
 import '../../presentation/providers/app_provider.dart';
 import '../../presentation/providers/auth_provider.dart';
@@ -358,26 +349,27 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+
   Widget termsAndCondi() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 5.0),
       child: Wrap(
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text('By continuing, you agree to our ', style: white13w5),
+          Text('By continuing, you agree to our', style: white13w5),
           TextButton(
             onPressed: () {
               PageNavigateScreen().push(context, TermsAndConditonPage());
             },
-            child: Text('Terms & Conditions', style: white13w5),
+            child: Text('Terms & Conditions', style: green14w5),
           ),
           Text(' and ', style: white13w5),
           TextButton(
             onPressed: () {
               PageNavigateScreen().push(context, PrivacyPolicyPage());
             },
-            child: Text('Privacy Policy', style: white13w5),
+            child: Text('Privacy Policy', style: green14w5),
           ),
         ],
       ),

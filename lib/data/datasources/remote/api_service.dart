@@ -6,8 +6,13 @@ import '../../../../core/error/exceptions.dart';
 import '../../models/auth_response_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../models/home_data_model.dart';
+import '../../models/chef_dashboard_response.dart';
+import '../../models/chef_orders_response.dart';
+import '../../models/chef_followers_response.dart';
 import '../../models/search_response_model.dart';
 import '../../models/notification_model.dart';
+import '../../models/app_content_model.dart';
+import '../../models/faq_model.dart';
 import '../../../Component/global_data/global_data.dart'; // Import global data
 
 abstract class RemoteDataSource {
@@ -21,6 +26,17 @@ abstract class RemoteDataSource {
   Future<SearchResponseModel> searchUsers(String query, String? userId);
   Future<List<NotificationModel>> getNotifications(String userId);
   Future<bool> markNotificationAsRead(String notificationId, String userId);
+  Future<ChefDashboardResponse> getChefDashboard(String chefId);
+  Future<ChefOrdersResponse> getChefOrders(String chefId);
+  Future<ChefFollowersResponse> getChefFollowers(String userId, String userType);
+  Future<AppContentModel> getAppContent();
+  Future<FaqModel> getFaq();
+  Future<Map<String, dynamic>> changePassword(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> contactUs(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> body,
+    String? imagePath,
+  );
 }
 
 class RemoteDataSourceImpl implements RemoteDataSource {
@@ -223,23 +239,27 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   Future<UserProfileModel> getUserProfile(String userId, String userType) async {
     try {
       final response = await dio.get(
-        'get_profile.php',
+        'https://munchups.com/webservice/get_profile.php',
         queryParameters: {
           'user_id': userId,
           'user_type': userType,
         },
       );
-      
+
       if (response.statusCode == 200) {
         final data = response.data;
-        if (data['success'] == 'true') {
-          return UserProfileModel.fromJson(data);
+        print('RemoteDataSource: getUserProfile raw=$data');
+        if (data is Map &&
+            (data['success'] == 'true' || data['success'] == true)) {
+          final normalized = Map<String, dynamic>.from(data);
+          return UserProfileModel.fromJson(normalized);
         } else {
-          throw ServerException(data['msg'] ?? 'Failed to load profile');
+          throw ServerException(
+              data['msg']?.toString() ?? 'Failed to load profile');
         }
-      } else {
-        throw ServerException('Network error occurred');
       }
+
+      throw ServerException('Network error occurred');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
@@ -369,6 +389,236 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       } else {
         throw ServerException('Network error occurred');
       }
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  Map<String, dynamic> _ensureJsonMap(Response response) {
+    dynamic data = response.data;
+    if (data is String) {
+      data = jsonDecode(data);
+    }
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    if (data is Map) {
+      return Map<String, dynamic>.from(data as Map);
+    }
+    throw ServerException('Invalid response format');
+  }
+
+  Options _defaultJsonOptions() => Options(
+        responseType: ResponseType.json,
+        headers: {
+          'Accept': 'application/json',
+        },
+      );
+
+  @override
+  Future<ChefDashboardResponse> getChefDashboard(String chefId) async {
+    try {
+      final response = await dio.get(
+        'get_all_ocassion_orderBYBUYER.php',
+        queryParameters: {'chef_id': chefId},
+        options: _defaultJsonOptions(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = _ensureJsonMap(response);
+        return ChefDashboardResponse.fromJson(data);
+      }
+      throw ServerException('Network error occurred');
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<ChefOrdersResponse> getChefOrders(String chefId) async {
+    try {
+      final response = await dio.get(
+        'get_all_orderBYCHEF_or_GROCER_ID.php',
+        queryParameters: {'chef_grocer_id': chefId},
+        options: _defaultJsonOptions(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = _ensureJsonMap(response);
+        return ChefOrdersResponse.fromJson(data);
+      }
+      throw ServerException('Network error occurred');
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<ChefFollowersResponse> getChefFollowers(String userId, String userType) async {
+    try {
+      final response = await dio.get(
+        'all_following_or_follower.php/',
+        queryParameters: {
+          'user_id': userId,
+          'user_type': userType,
+        },
+        options: _defaultJsonOptions(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = _ensureJsonMap(response);
+        return ChefFollowersResponse.fromJson(data);
+      }
+      throw ServerException('Network error occurred');
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<AppContentModel> getAppContent() async {
+    try {
+      final response = await dio.get(
+        'get_content.php',
+        options: _defaultJsonOptions(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = _ensureJsonMap(response);
+        return AppContentModel.fromJson(data);
+      }
+      throw ServerException('Network error occurred');
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<FaqModel> getFaq() async {
+    try {
+      final response = await dio.get(
+        'faq.php',
+        options: _defaultJsonOptions(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = _ensureJsonMap(response);
+        return FaqModel.fromJson(data);
+      }
+      throw ServerException('Network error occurred');
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> changePassword(
+      Map<String, dynamic> body) async {
+    try {
+      final formData = FormData.fromMap(body);
+      final response = await dio.post(
+        'change_password.php',
+        data: formData,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final data = _ensureJsonMap(response);
+      final bool isSuccess =
+          data['success']?.toString().toLowerCase() == 'true';
+      if (!isSuccess) {
+        throw ServerException(data['msg']?.toString() ?? 'Change password failed');
+      }
+      return data;
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> contactUs(Map<String, dynamic> body) async {
+    try {
+      final formData = FormData.fromMap(body);
+      final response = await dio.post(
+        'contact_us.php',
+        data: formData,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final data = _ensureJsonMap(response);
+      final bool isSuccess =
+          data['success']?.toString().toLowerCase() == 'true';
+      if (!isSuccess) {
+        throw ServerException(data['msg']?.toString() ?? 'Request failed');
+      }
+      return data;
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile(
+      Map<String, dynamic> body, String? imagePath) async {
+    try {
+      final formMap = Map<String, dynamic>.from(body);
+      final formData = FormData.fromMap(formMap);
+
+      if (imagePath != null && imagePath.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            'photo',
+            await MultipartFile.fromFile(
+              imagePath,
+              filename: imagePath.split('/').last,
+            ),
+          ),
+        );
+      }
+
+      final response = await dio.post(
+        'update_profile.php',
+        data: formData,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final data = _ensureJsonMap(response);
+      final bool isSuccess =
+          data['success']?.toString().toLowerCase() == 'true';
+      if (!isSuccess) {
+        throw ServerException(data['msg']?.toString() ?? 'Profile update failed');
+      }
+      return data;
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {

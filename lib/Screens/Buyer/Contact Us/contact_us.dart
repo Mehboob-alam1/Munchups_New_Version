@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:munchups_app/Apis/post_apis.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/comman_button/comman_botton.dart';
 import 'package:munchups_app/Component/Strings/strings.dart';
@@ -16,6 +15,8 @@ import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:munchups_app/Screens/Chef/Home/chef_home.dart';
 import 'package:munchups_app/Screens/Grocer/grocer_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:munchups_app/presentation/providers/settings_provider.dart';
 
 import '../../../Comman widgets/app_bar/back_icon_appbar.dart';
 
@@ -97,43 +98,49 @@ class _ContactUsFormPageState extends State<ContactUsFormPage> {
   void contactUsApiCall(context) async {
     Utils().showSpinner(context);
 
-    dynamic body = {
+    final body = {
       'user_id': userData['user_id'].toString(),
       'description': textEditingController.text.trim(),
       'player_id': playerID,
       'device_type': deviceType,
     };
 
-    try {
-      await PostApiServer().contactUsApi(body).then((value) {
-        FocusScope.of(context).requestFocus(FocusNode());
-        Utils().stopSpinner(context);
+    final settingsProvider = context.read<SettingsProvider>();
 
-        if (value['success'] == 'true') {
-          Utils().myToast(context, msg: value['msg']);
-          if (getUserType == 'buyer') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const BuyerHomePage());
-            });
-          } else if (getUserType == 'chef') {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const ChefHomePage());
-            });
-          } else {
-            Timer(const Duration(milliseconds: 600), () {
-              PageNavigateScreen()
-                  .pushRemovUntil(context, const GrocerHomePage());
-            });
-          }
+    try {
+      final success = await settingsProvider.submitContact(body);
+      Utils().stopSpinner(context);
+
+      if (success) {
+        final message = settingsProvider.submitMessage.isNotEmpty
+            ? settingsProvider.submitMessage
+            : 'Feedback sent successfully';
+        Utils().myToast(context, msg: message);
+        if (getUserType == 'buyer') {
+          Timer(const Duration(milliseconds: 600), () {
+            PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
+          });
+        } else if (getUserType == 'chef') {
+          Timer(const Duration(milliseconds: 600), () {
+            PageNavigateScreen().pushRemovUntil(context, const ChefHomePage());
+          });
         } else {
-          Utils().myToast(context, msg: value['msg']);
+          Timer(const Duration(milliseconds: 600), () {
+            PageNavigateScreen().pushRemovUntil(context, const GrocerHomePage());
+          });
         }
-      });
+      } else {
+        final error = settingsProvider.submitError.isNotEmpty
+            ? settingsProvider.submitError
+            : 'Unable to send request';
+        Utils().myToast(context, msg: error);
+      }
     } catch (e) {
       Utils().stopSpinner(context);
+      Utils().myToast(context, msg: e.toString());
       log(e.toString());
+    } finally {
+      settingsProvider.clearSubmitState();
     }
   }
 }
