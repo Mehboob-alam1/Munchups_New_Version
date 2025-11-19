@@ -165,6 +165,58 @@ class _HomeOrderDetailPageState extends State<HomeOrderDetailPage> {
   }
 
   Widget chefDetail() {
+    // Check if buyer data is available
+    final buyerName = _getBuyerName();
+    final buyerEmail = _getBuyerEmail();
+    final buyerPhone = _getBuyerPhone();
+    final buyerAddress = _getBuyerAddress();
+    
+    // If no buyer data is available, show a better UX
+    if (data.buyerId == 0 || 
+        (buyerName.isEmpty && buyerEmail.isEmpty && buyerPhone.isEmpty)) {
+      return Card(
+        color: DynamicColor.boxColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: DynamicColor.primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person_remove_outlined,
+                  size: 80,
+                  color: DynamicColor.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Buyer Found',
+                style: primary17w6.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Buyer information is not available for this order.',
+                style: white14w5.copyWith(
+                  color: Colors.white.withOpacity(0.8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Card(
       color: DynamicColor.boxColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -176,19 +228,50 @@ class _HomeOrderDetailPageState extends State<HomeOrderDetailPage> {
                 alignment: Alignment.center,
                 child: Text('Buyer Detail', style: primary17w6)),
           ),
-          customWidget(
-              title: 'Buyer Name', value: '${data.firstName} ${data.lastName}'),
-          customWidget(title: 'Buyer Email', value: data.emailId),
-          customWidget(
-              title: 'Buyer Address', value: formatAddress(data.location)),
-          customWidget(
-              title: 'Buyer Phone No',
-              value: data.phone == 'null' && data.phone == 'NA'
-                  ? 'Not available'
-                  : formatMobileNumber(data.phone)),
+          if (buyerName.isNotEmpty)
+            customWidget(title: 'Buyer Name', value: buyerName),
+          if (buyerEmail.isNotEmpty)
+            customWidget(title: 'Buyer Email', value: buyerEmail),
+          if (buyerAddress.isNotEmpty)
+            customWidget(title: 'Buyer Address', value: buyerAddress),
+          if (buyerPhone.isNotEmpty)
+            customWidget(title: 'Buyer Phone No', value: buyerPhone),
         ],
       ),
     );
+  }
+  
+  String _getBuyerName() {
+    final firstName = data.firstName.trim();
+    final lastName = data.lastName.trim();
+    if (firstName.isEmpty && lastName.isEmpty) {
+      return data.userName.trim().isNotEmpty ? data.userName.trim() : '';
+    }
+    return '${firstName} ${lastName}'.trim();
+  }
+  
+  String _getBuyerEmail() {
+    final email = data.emailId.trim();
+    if (email.isEmpty || email.toLowerCase() == 'null' || email.toLowerCase() == 'na') {
+      return '';
+    }
+    return email;
+  }
+  
+  String _getBuyerPhone() {
+    final phone = data.phone.trim();
+    if (phone.isEmpty || phone.toLowerCase() == 'null' || phone.toLowerCase() == 'na') {
+      return '';
+    }
+    return formatMobileNumber(phone);
+  }
+  
+  String _getBuyerAddress() {
+    final address = data.location.trim();
+    if (address.isEmpty || address.toLowerCase() == 'null' || address.toLowerCase() == 'na') {
+      return '';
+    }
+    return formatAddress(address);
   }
 
   Widget customWidget({required String title, required String value}) {

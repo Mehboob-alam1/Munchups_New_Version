@@ -16,3 +16,4 @@ class FetchAppContentUseCase
     return repository.fetchAppContent();
   }
 }
+

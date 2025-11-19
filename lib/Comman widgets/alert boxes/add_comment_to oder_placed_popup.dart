@@ -4,6 +4,9 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:munchups_app/Apis/post_apis.dart';
 import 'package:munchups_app/Comman%20widgets/Input%20Fields/input_fields_with_lightwhite.dart';
 import 'package:munchups_app/Comman%20widgets/alert%20boxes/insuficiant_amount_popup.dart';
@@ -16,7 +19,7 @@ import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
 import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Buyer/Card%20Payment/card_payment_form.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:munchups_app/presentation/providers/cart_provider.dart';
 
 class AddCommentToOrderForPlacedPopup extends StatefulWidget {
   dynamic data;
@@ -124,10 +127,19 @@ class _AddCommentToOrderForPlacedPopupState
         if (value['success'] == 'true') {
           Utils().myToast(context, msg: value['msg']);
           prefs.remove('cart');
+          if (mounted) {
+            context.read<CartProvider>().initializeCart();
+          }
 
           Timer(const Duration(milliseconds: 600), () {
             prefs.remove('cart');
-            PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
+            if (mounted) {
+              context
+                  .read<CartProvider>()
+                  .initializeCart();
+              PageNavigateScreen()
+                  .pushRemovUntil(context, const BuyerHomePage());
+            }
           });
         } else {
           if (value['status'] == 'no_customer') {

@@ -9,3 +9,4 @@ class FaqEntity {
     required this.content,
   });
 }
+

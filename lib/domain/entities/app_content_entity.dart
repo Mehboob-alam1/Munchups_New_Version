@@ -13,3 +13,4 @@ class AppContentEntity {
     required this.aboutUs,
   });
 }
+

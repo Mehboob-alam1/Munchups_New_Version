@@ -340,6 +340,9 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw ServerException('Network error occurred');
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return SearchResponseModel(data: const []);
+      }
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
       throw ServerException(e.toString());

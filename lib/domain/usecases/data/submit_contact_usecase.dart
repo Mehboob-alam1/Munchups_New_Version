@@ -16,3 +16,4 @@ class SubmitContactUseCase
     return repository.submitContactUs(params);
   }
 }
+

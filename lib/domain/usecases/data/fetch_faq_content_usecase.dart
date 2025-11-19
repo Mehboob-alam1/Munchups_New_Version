@@ -15,3 +15,4 @@ class FetchFaqContentUseCase implements UseCase<FaqEntity, NoParams> {
     return repository.fetchFaqContent();
   }
 }
+

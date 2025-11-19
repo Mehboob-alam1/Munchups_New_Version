@@ -16,3 +16,4 @@ class ChangePasswordUseCase
     return repository.changePassword(params);
   }
 }
+

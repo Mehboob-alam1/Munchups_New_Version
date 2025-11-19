@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:munchups_app/Apis/get_apis.dart';
 import 'package:munchups_app/Apis/post_apis.dart';
-import 'package:munchups_app/Comman%20widgets/alert%20boxes/address_list_popup.dart';
 import 'package:munchups_app/Comman%20widgets/app_bar/back_icon_appbar.dart';
 import 'package:munchups_app/Comman%20widgets/comman%20dopdown/foodCategory_dropdown.dart';
 import 'package:munchups_app/Comman%20widgets/comman%20dopdown/occation_dropdown.dart';
@@ -299,37 +297,19 @@ class _OnDemandFoodFormState extends State<OnDemandFoodForm> {
 
   Widget locationFiled() {
     return InputFieldsWithLightWhiteColor(
-        onTap: () {
-          if (postalCode.isNotEmpty) {
-            if (addressList.isNotEmpty) {
-              showDialog(
-                  context: context,
-                  barrierDismissible: Platform.isAndroid ? false : true,
-                  builder: (context) => AddressPopupPopUp(list: addressList));
-            } else {
-              Utils().myToast(context, msg: 'Address not found!');
-            }
-          } else {
-            Utils().myToast(context, msg: 'Please enter postal code');
-          }
-        },
-        readOnly: true,
         controller: addressController,
         labelText: TextStrings.textKey['location'],
         textInputAction: TextInputAction.next,
         keyboardType: TextInputType.streetAddress,
         style: black15bold,
-        suffixIcon: const Icon(
-          Icons.arrow_drop_down,
-          size: 35,
-          color: DynamicColor.primaryColor,
-        ),
         validator: (val) {
           if (val.isEmpty) {
             return TextStrings.textKey['field_req']!;
           }
         },
-        onChanged: (value) {});
+        onChanged: (value) {
+          setState(() {});
+        });
   }
 
   Widget postalCodeFiled() {

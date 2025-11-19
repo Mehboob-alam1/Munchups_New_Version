@@ -1,26 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:munchups_app/Component/color_class/color_class.dart';
 
-class CustomNetworkImage extends StatefulWidget {
-  String url;
-  BoxFit? fit;
-  CustomNetworkImage({super.key, required this.url, this.fit});
+class CustomNetworkImage extends StatelessWidget {
+  final String? url;
+  final BoxFit? fit;
+  final double? height;
+  final double? width;
 
-  @override
-  State<CustomNetworkImage> createState() => _CustomNetworkImageState();
-}
+  const CustomNetworkImage({
+    super.key,
+    required this.url,
+    this.fit,
+    this.height,
+    this.width,
+  });
 
-class _CustomNetworkImageState extends State<CustomNetworkImage> {
+  String? _sanitizeUrl(String? raw) {
+    if (raw == null) {
+      return null;
+    }
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    final upper = trimmed.toUpperCase();
+    if (upper == 'NA' || upper == 'NULL') {
+      return null;
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final normalizedUrl = _sanitizeUrl(url);
+    if (normalizedUrl == null) {
+      return Image.asset(
+        'assets/images/image_not_found.png',
+        fit: fit ?? BoxFit.cover,
+        height: height,
+        width: width,
+      );
+    }
+
     return Image.network(
-      widget.url,
-      fit: (widget.fit == null) ? BoxFit.fill : widget.fit,
+      normalizedUrl,
+      fit: fit ?? BoxFit.fill,
+      height: height,
+      width: width,
       loadingBuilder: (BuildContext context, Widget child,
           ImageChunkEvent? loadingProgress) {
         if (loadingProgress == null) return child;
         return SizedBox(
-          height: 100,
+          height: height ?? 100,
           child: Center(
             child: CircularProgressIndicator(
               color: DynamicColor.primaryColor,
@@ -35,9 +69,9 @@ class _CustomNetworkImageState extends State<CustomNetworkImage> {
       errorBuilder: (context, exception, stackTrace) {
         return Image.asset(
           'assets/images/image_not_found.png',
-          fit: BoxFit.cover,
-          height: 130,
-          width: double.infinity,
+          fit: fit ?? BoxFit.cover,
+          height: height,
+          width: width,
         );
       },
     );

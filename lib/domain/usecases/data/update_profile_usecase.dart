@@ -23,3 +23,4 @@ class UpdateProfileUseCase
     return repository.updateProfile(params.body, params.imagePath);
   }
 }
+

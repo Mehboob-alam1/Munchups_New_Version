@@ -1,22 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:munchups_app/Comman%20widgets/alert%20boxes/add_comment_to%20oder_placed_popup.dart';
-import 'package:munchups_app/Comman%20widgets/comman_button/comman_botton.dart';
-import 'package:munchups_app/Component/color_class/color_class.dart';
-import 'package:munchups_app/Component/global_data/global_data.dart';
-import 'package:munchups_app/Component/navigatepage/navigate_page.dart';
-import 'package:munchups_app/Component/styles/styles.dart';
-import 'package:munchups_app/Component/utils/custom_network_image.dart';
-import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
-import 'package:munchups_app/Component/utils/utils.dart';
-import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
+import '../../../Comman widgets/alert boxes/add_comment_to oder_placed_popup.dart';
 import '../../../Comman widgets/app_bar/back_icon_appbar.dart';
+import '../../../Comman widgets/comman_button/comman_botton.dart';
 import '../../../Component/Strings/strings.dart';
+import '../../../Component/color_class/color_class.dart';
+import '../../../Component/global_data/global_data.dart';
+import '../../../Component/navigatepage/navigate_page.dart';
+import '../../../Component/styles/styles.dart';
+import '../../../Component/utils/custom_network_image.dart';
+import '../../../Component/utils/sizeConfig/sizeConfig.dart';
+import '../../../Component/utils/utils.dart';
+import '../../../domain/entities/cart_item.dart';
+import '../../../presentation/providers/cart_provider.dart';
 
 class CartListPage extends StatefulWidget {
   const CartListPage({super.key});
@@ -26,43 +26,11 @@ class CartListPage extends StatefulWidget {
 }
 
 class _CartListPageState extends State<CartListPage> {
-  int count = 0;
-
-  double totalPrice = 0.0;
-
-  dynamic checkItemLocal;
-
   @override
   void initState() {
     super.initState();
-    getcartItemData();
-  }
-
-  void getcartItemData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      checkItemLocal = jsonDecode(prefs.getString('cart').toString());
-      countPrice();
-    });
-  }
-
-  void countPrice() {
-    setState(() {
-      if (checkItemLocal != null) {
-        totalPrice += checkItemLocal['total_price'];
-      }
-    });
-  }
-
-  void removecartItem() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      prefs.remove('cart').toString();
-
-      Utils().myToast(context, msg: 'Removed successfully');
-      Timer(const Duration(milliseconds: 600), () {
-        PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
-      });
+    Future.microtask(() {
+      context.read<CartProvider>().initializeCart();
     });
   }
 
@@ -72,259 +40,287 @@ class _CartListPageState extends State<CartListPage> {
       appBar: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: BackIconCustomAppBar(title: TextStrings.textKey['cart']!)),
-      body: Padding(
-        padding: EdgeInsets.only(
-            left: SizeConfig.getSize10(context: context),
-            right: SizeConfig.getSize10(context: context)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            checkItemLocal != null
-                ? cardListShow()
-                : Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                          top: SizeConfig.getSizeHeightBy(
-                              context: context, by: 0.25)),
-                      child: Text('No item available', style: primary13bold),
-                    ),
-                  ),
-            Container(
-              child: total(),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget cardListShow() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Card(
-        color: DynamicColor.boxColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-                flex: 2,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                      height: SizeConfig.getSizeHeightBy(
-                          context: context, by: 0.11),
-                      color: DynamicColor.black.withOpacity(0.3),
-                      child: CustomNetworkImage(
-                        url: checkItemLocal['dish_image'],
-                        fit: BoxFit.contain,
-                      )),
-                )),
-            Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //  const SizedBox(height: 8),
-                      Text(checkItemLocal['dish_name'],
-                          style: white17Bold,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      Row(
-                        children: [
-                          Text('Initial Price: ',
-                              style: lightWhite14Bold,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          Text(
-                              '$currencySymbol${checkItemLocal['dish_price'].toStringAsFixed(2).toString()}',
-                              style: primary15w5,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text('Total Price: ',
-                              style: lightWhite14Bold,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          Text(
-                              //'$currencySymbol${checkItemLocal['total_price']}',
-                              '$currencySymbol${checkItemLocal['total_price'].toStringAsFixed(2).toString()}',
-                              style: greenColor15bold,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text('Qty: ',
-                              style: lightWhite14Bold,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          Text('${checkItemLocal['quantity']}',
-                              style: lightWhite15Bold,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: InkWell(
-                          onTap: () {
-                            removecartItem();
-                          },
-                          child: Container(
-                            height: 20,
-                            width: 70,
-                            alignment: Alignment.center,
-                            margin: const EdgeInsets.only(bottom: 10, top: 5),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: DynamicColor.primaryColor,
-                            ),
-                            child: Text('Remove', style: white13w5),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                )),
-            Expanded(
-                child: Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                margin: const EdgeInsets.only(right: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () {
-                        if (checkItemLocal['quantity'] > 1) {
-                          setState(() {
-                            checkItemLocal['quantity']--;
-
-                            var s = checkItemLocal['total_price'] -
-                                checkItemLocal['dish_price'];
-                            checkItemLocal['total_price'] = s;
-
-                            totalPrice -= checkItemLocal['dish_price'];
-                          });
-                        }
-                      },
-                      child: Container(
-                        height: 25,
-                        width: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: DynamicColor.primaryColor,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(
-                          Icons.remove,
-                          color: DynamicColor.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      checkItemLocal['quantity'].toString(),
-                      style: white17Bold,
-                    ),
-                    const SizedBox(height: 3),
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          checkItemLocal['quantity']++;
-                          var s = checkItemLocal['total_price'] +
-                              checkItemLocal['dish_price'];
-                          checkItemLocal['total_price'] = s;
-                          totalPrice += checkItemLocal['dish_price'];
-                        });
-                      },
-                      child: Container(
-                        height: 25,
-                        width: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: DynamicColor.primaryColor,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(
-                          Icons.add,
-                          color: DynamicColor.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      body: Consumer<CartProvider>(
+        builder: (context, cartProvider, child) {
+          if (cartProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: DynamicColor.primaryColor,
               ),
-            ))
-          ],
-        ),
+            );
+          }
+
+          final items = cartProvider.items;
+
+          if (items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: SizeConfig.getSizeHeightBy(context: context, by: 0.25),
+                ),
+                child:  Text('No item available', style: primary13bold),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: SizeConfig.getSize10(context: context),
+              right: SizeConfig.getSize10(context: context),
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.only(top: 12),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) =>
+                        _CartItemCard(item: items[index]),
+                  ),
+                ),
+                _CartTotals(
+                  totalItems: cartProvider.totalItems,
+                  totalAmount: cartProvider.totalAmount,
+                  onCheckout: () {
+                    final firstItem = items.first;
+                    final payload = _buildOrderPayload(firstItem);
+
+                    showDialog(
+                      context: context,
+                      barrierDismissible: Platform.isAndroid ? false : true,
+                      builder: (context) =>
+                          AddCommentToOrderForPlacedPopup(data: payload),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget total() {
+  Map<String, dynamic> _buildOrderPayload(CartItem item) {
+    final totalPrice = (item.price * item.quantity);
+    return {
+      'chef_grocer_id': item.sellerId,
+      'seller_type': item.sellerType,
+      'seller_name': item.sellerName,
+      'dish_id': item.id,
+      'dish_name': item.name,
+      'dish_image': item.image,
+      'quantity': item.quantity,
+      'dish_price': item.price,
+      'total_price': totalPrice,
+      'grand_total': totalPrice,
+    };
+  }
+}
+
+class _CartItemCard extends StatelessWidget {
+  final CartItem item;
+
+  const _CartItemCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final cartProvider = context.read<CartProvider>();
+    final itemTotal = item.price * item.quantity;
+
     return Card(
       color: DynamicColor.boxColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                height: SizeConfig.getSizeHeightBy(context: context, by: 0.11),
+                width: SizeConfig.getSizeWidthBy(context: context, by: 0.25),
+                color: DynamicColor.black.withOpacity(0.3),
+                child: CustomNetworkImage(
+                  url: item.image,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: white17Bold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Initial Price: $currencySymbol${item.price.toStringAsFixed(2)}',
+                    style: lightWhite14Bold,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Total Price: $currencySymbol${itemTotal.toStringAsFixed(2)}',
+                    style: greenColor15bold,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Qty: ${item.quantity}',
+                    style: lightWhite15Bold,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _QuantityButton(
+                        icon: Icons.remove,
+                        onTap: () async {
+                          if (item.quantity > 1) {
+                            await cartProvider.updateQuantity(
+                              item.id,
+                              item.quantity - 1,
+                            );
+                          } else {
+                            await cartProvider.removeItem(item.id);
+                          }
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          item.quantity.toString(),
+                          style: white17Bold,
+                        ),
+                      ),
+                      _QuantityButton(
+                        icon: Icons.add,
+                        onTap: () async {
+                          await cartProvider.updateQuantity(
+                            item.id,
+                            item.quantity + 1,
+                          );
+                        },
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          await cartProvider.removeItem(item.id);
+                          Utils().myToast(context, msg: 'Removed successfully');
+                        },
+                        child: const Text(
+                          'Remove',
+                          style: TextStyle(color: DynamicColor.primaryColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QuantityButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 28,
+        width: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: DynamicColor.primaryColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          color: DynamicColor.white,
+          size: 18,
+        ),
+      ),
+    );
+  }
+}
+
+class _CartTotals extends StatelessWidget {
+  final int totalItems;
+  final double totalAmount;
+  final VoidCallback onCheckout;
+
+  const _CartTotals({
+    required this.totalItems,
+    required this.totalAmount,
+    required this.onCheckout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: DynamicColor.boxColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Item:', style: white15bold),
-                Text(checkItemLocal != null ? '1' : '0', style: white15bold),
+                 Text('Items:', style: white15bold),
+                Text(totalItems.toString(), style: white15bold),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Sub Total:', style: white15bold),
+                 Text('Sub Total:', style: white15bold),
                 Text(
-                    '$currencySymbol${totalPrice.toStringAsFixed(2).toString()}',
-                    style: white15bold),
+                  '$currencySymbol${totalAmount.toStringAsFixed(2)}',
+                  style: white15bold,
+                ),
               ],
             ),
             const Divider(color: DynamicColor.white),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total', style: white21bold),
+                 Text('Total', style: white21bold),
                 Text(
-                    '$currencySymbol${totalPrice.toStringAsFixed(2).toString()}',
-                    style: primary25bold),
+                  '$currencySymbol${totalAmount.toStringAsFixed(2)}',
+                  style: primary25bold,
+                ),
               ],
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
             CommanButton(
-                heroTag: 1,
-                shap: 10.0,
-                width: MediaQuery.of(context).size.width * 0.7,
-                buttonName: 'Pay & Get Order Number',
-                onPressed: () {
-                  if (checkItemLocal != null) {
-                    showDialog(
-                        context: context,
-                        barrierDismissible: Platform.isAndroid ? false : true,
-                        builder: (context) => AddCommentToOrderForPlacedPopup(
-                            data: checkItemLocal));
-                  } else {
-                    Utils().myToast(context, msg: 'No Cart item available');
-                  }
-
-                  //   PageNavigateScreen().push(context, const MainHomePage());
-                })
+              heroTag: 1,
+              shap: 10.0,
+              width: MediaQuery.of(context).size.width * 0.7,
+              buttonName: 'Pay & Get Order Number',
+              onPressed: () {
+                if (totalItems == 0) {
+                  Utils().myToast(context, msg: 'No Cart item available');
+                } else {
+                  onCheckout();
+                }
+              },
+            ),
           ],
         ),
       ),

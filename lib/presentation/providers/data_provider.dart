@@ -212,32 +212,52 @@ class DataProvider extends ChangeNotifier {
 
   // Search methods
   Future<void> searchUsers(String query) async {
-    _setLoading(true);
+    final normalizedQuery = query.trim();
     _setError('');
-    _searchQuery = query;
+    _searchQuery = normalizedQuery;
+
+    if (normalizedQuery.isEmpty) {
+      _searchResults = [];
+      _setLoading(false);
+      notifyListeners();
+      return;
+    }
+
+    _setLoading(true);
     
     try {
-      if (query.isEmpty) {
-        _searchResults = [];
-        return;
-      }
-
       final result = await searchUsersUseCase({
-        'query': query,
+        'query': normalizedQuery,
         'userId': null,
       });
 
       result.fold(
         (failure) {
-          _setError(failure.message);
+          final fallback = _localSearch(normalizedQuery);
+          if (fallback.isNotEmpty) {
+            _searchResults = fallback;
+            _error = '';
+          } else {
+            _setError(failure.message);
+          }
         },
         (success) {
-          _searchResults = success;
+          if (success.isEmpty) {
+            _searchResults = _localSearch(normalizedQuery);
+          } else {
+            _searchResults = success;
+          }
         },
       );
     } catch (e) {
-      _setError(e.toString());
       debugPrint('Error searching users: $e');
+      final fallback = _localSearch(normalizedQuery);
+      if (fallback.isNotEmpty) {
+        _searchResults = fallback;
+        _error = '';
+      } else {
+        _setError(e.toString());
+      }
     } finally {
       _setLoading(false);
     }
@@ -281,6 +301,76 @@ class DataProvider extends ChangeNotifier {
   void clearSearch() {
     _searchQuery = '';
     _searchResults = [];
+    if (_isLoading) {
+      _isLoading = false;
+    }
     notifyListeners();
+  }
+
+  List<Map<String, dynamic>> _localSearch(String query) {
+    final normalized = query.toLowerCase();
+    final List<Map<String, dynamic>> results = [];
+
+    bool matchesField(String? value) {
+      if (value == null) return false;
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return false;
+      return trimmed.toLowerCase().contains(normalized);
+    }
+
+    void addItem(dynamic source, String fallbackType) {
+      if (source is! Map) return;
+      final map = Map<String, dynamic>.from(source as Map);
+      map['user_type'] ??= fallbackType;
+
+      final fields = <String?>[
+        map['full_name']?.toString(),
+        map['first_name']?.toString(),
+        map['last_name']?.toString(),
+        map['user_name']?.toString(),
+        map['name']?.toString(),
+        map['profession_name']?.toString(),
+        map['shop_name']?.toString(),
+        map['store_name']?.toString(),
+        map['city']?.toString(),
+        map['state']?.toString(),
+        map['country']?.toString(),
+      ];
+
+      bool matches = fields.any(matchesField);
+
+      if (!matches && map['category_detail'] is List) {
+        for (final category in map['category_detail']) {
+          if (category is Map &&
+              matchesField(category['category_name']?.toString())) {
+            matches = true;
+            break;
+          }
+        }
+      }
+
+      if (!matches && map['all_dish'] is List) {
+        for (final dish in map['all_dish']) {
+          if (dish is Map &&
+              matchesField(dish['dish_name']?.toString())) {
+            matches = true;
+            break;
+          }
+        }
+      }
+
+      if (matches) {
+        results.add(map);
+      }
+    }
+
+    for (final chef in _chefsList) {
+      addItem(chef, 'chef');
+    }
+    for (final grocer in _grocersList) {
+      addItem(grocer, 'grocer');
+    }
+
+    return results;
   }
 }

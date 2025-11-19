@@ -63,175 +63,170 @@ class _PostedDemandFoodPageState extends State<PostedDemandFoodPage> {
                 } else if (snapshot.data!.ocCategoryOrderArr == 'NA') {
                   return const Center(child: Text('No Posted Food available'));
                 } else {
-                  return Padding(
+                  return ListView.builder(
                     padding: const EdgeInsets.all(8.0),
-                    child: ListView.builder(
-                        shrinkWrap: true,
-                        primary: false,
-                        itemCount: snapshot.data!.ocCategoryOrderArr.length,
-                        itemBuilder: (context, index) {
-                          PostedOcCategoryOrderArr data =
-                              snapshot.data!.ocCategoryOrderArr[index];
-                          return InkWell(
-                            onTap: () {
-                              PageNavigateScreen().push(
-                                  context,
-                                  ProposalFoodListPage(
-                                      buyerID: userData['user_id'].toString(),
-                                      foodID: data.foodId.toString()));
-                            },
-                            child: Card(
-                              elevation: 10,
-                              color: DynamicColor.boxColor,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: Stack(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                          child: Image.asset(
-                                        'assets/images/on-demand-food.png',
-                                        height: 80,
-                                      )),
-                                      Expanded(
-                                          flex: 3,
-                                          child: ListTile(
-                                            minLeadingWidth: 0.0,
-                                            horizontalTitleGap: 10,
-                                            contentPadding:
-                                                const EdgeInsets.only(
-                                                    left: 5, right: 5, top: 8),
-                                            minVerticalPadding: 0.0,
-                                            title: Text(
-                                                data.occasionCategoryName,
-                                                style: white17Bold,
-                                                maxLines: 1,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                            subtitle: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const SizedBox(height: 3),
-                                                Text(
-                                                    '$currencySymbol${data.budget}',
-                                                    style: green14w5,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis),
-                                                const SizedBox(height: 3),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                        '${TextStrings.textKey['no_of_people']!}: ',
-                                                        style: lightWhite14Bold,
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis),
-                                                    Text(
-                                                        data.noOfPeople
-                                                            .toString(),
-                                                        style: primary15w5,
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ))
-                                    ],
-                                  ),
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          top: 8, right: 5),
+                    itemCount: snapshot.data!.ocCategoryOrderArr.length,
+                    itemBuilder: (context, index) {
+                      PostedOcCategoryOrderArr data =
+                          snapshot.data!.ocCategoryOrderArr[index];
+                      return InkWell(
+                        onTap: () {
+                          PageNavigateScreen().push(
+                              context,
+                              ProposalFoodListPage(
+                                  buyerID: userData['user_id'].toString(),
+                                  foodID: data.foodId.toString()));
+                        },
+                        child: Card(
+                          elevation: 10,
+                          color: DynamicColor.boxColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 8, right: 70, top: 8, bottom: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/on-demand-food.png',
+                                      height: 80,
+                                      width: 80,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
                                       child: Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                            MainAxisAlignment.start,
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.center,
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          SizedBox(
-                                            width: SizeConfig.getSizeWidthBy(
-                                                context: context, by: 0.12),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceAround,
-                                              children: [
-                                                InkWell(
-                                                  onTap: () {
-                                                    PageNavigateScreen().push(
-                                                        context,
-                                                        EdtiDemandFoodForm(
-                                                            foodID: data.foodId
-                                                                .toString()));
-                                                  },
-                                                  child: const Icon(
-                                                    Icons.draw,
-                                                    size: 22,
-                                                    color: DynamicColor.white,
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: () {
-                                                    showDialog(
-                                                        context: context,
-                                                        barrierDismissible:
-                                                            Platform.isAndroid
-                                                                ? false
-                                                                : true,
-                                                        builder: (context) =>
-                                                            DeleteItemPopUp(
-                                                              id: data.foodId
-                                                                  .toString(),
-                                                            )).then((value) {
-                                                      setState(() {});
-                                                    });
-                                                  },
-                                                  child: const Icon(
-                                                    Icons.delete,
-                                                    size: 22,
-                                                    color:
-                                                        DynamicColor.redColor,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          CircleAvatar(
-                                            radius: 15,
-                                            backgroundColor:
-                                                DynamicColor.secondryColor,
-                                            child: Text(
-                                              data.totalProposal == 'NA'
-                                                  ? '0'
-                                                  : data.totalProposal
-                                                      .toString(),
-                                              style: white14w5,
-                                            ),
+                                          Text(
+                                              data.occasionCategoryName,
+                                              style: white17Bold,
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                              '$currencySymbol${data.budget}',
+                                              style: green14w5,
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis),
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                    '${TextStrings.textKey['no_of_people']!}: ',
+                                                    style: lightWhite14Bold,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow
+                                                        .ellipsis),
+                                              ),
+                                              Flexible(
+                                                child: Text(
+                                                    data.noOfPeople
+                                                        .toString(),
+                                                    style: primary15w5,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow
+                                                        .ellipsis),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        }),
+                              Positioned(
+                                top: 8,
+                                right: 5,
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            PageNavigateScreen().push(
+                                                context,
+                                                EdtiDemandFoodForm(
+                                                    foodID: data.foodId
+                                                        .toString()));
+                                          },
+                                          child: const Icon(
+                                            Icons.draw,
+                                            size: 22,
+                                            color: DynamicColor.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        InkWell(
+                                          onTap: () {
+                                            showDialog(
+                                                context: context,
+                                                barrierDismissible:
+                                                    Platform.isAndroid
+                                                        ? false
+                                                        : true,
+                                                builder: (context) =>
+                                                    DeleteItemPopUp(
+                                                      id: data.foodId
+                                                          .toString(),
+                                                    )).then((value) {
+                                              setState(() {});
+                                            });
+                                          },
+                                          child: const Icon(
+                                            Icons.delete,
+                                            size: 22,
+                                            color:
+                                                DynamicColor.redColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    CircleAvatar(
+                                      radius: 15,
+                                      backgroundColor:
+                                          DynamicColor.secondryColor,
+                                      child: Text(
+                                        data.totalProposal == 'NA'
+                                            ? '0'
+                                            : data.totalProposal
+                                                .toString(),
+                                        style: white14w5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 }
             }

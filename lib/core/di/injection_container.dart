@@ -21,6 +21,7 @@ import '../../domain/usecases/auth/forgot_password_usecase.dart';
 import '../../domain/usecases/cart/add_to_cart_usecase.dart';
 import '../../domain/usecases/cart/remove_from_cart_usecase.dart';
 import '../../domain/usecases/cart/update_cart_usecase.dart';
+import '../../domain/usecases/cart/get_cart_items_usecase.dart';
 import '../../domain/usecases/data/fetch_home_data_usecase.dart';
 import '../../domain/usecases/data/fetch_user_profile_usecase.dart';
 import '../../domain/usecases/data/search_users_usecase.dart';
@@ -57,6 +58,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddToCartUseCase(sl()));
   sl.registerLazySingleton(() => RemoveFromCartUseCase(sl()));
   sl.registerLazySingleton(() => UpdateCartUseCase(sl()));
+  sl.registerLazySingleton(() => GetCartItemsUseCase(sl()));
 
   // Features - Data
   sl.registerLazySingleton(() => FetchHomeDataUseCase(sl()));
@@ -128,6 +130,7 @@ Future<void> init() async {
         addToCartUseCase: sl(),
         removeFromCartUseCase: sl(),
         updateCartUseCase: sl(),
+        getCartItemsUseCase: sl(),
       ));
   sl.registerFactory(() => DataProvider(
         fetchHomeDataUseCase: sl(),

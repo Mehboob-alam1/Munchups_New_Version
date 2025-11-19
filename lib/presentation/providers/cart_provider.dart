@@ -5,6 +5,8 @@ import '../../domain/entities/cart_item.dart';
 import '../../domain/usecases/cart/add_to_cart_usecase.dart';
 import '../../domain/usecases/cart/remove_from_cart_usecase.dart';
 import '../../domain/usecases/cart/update_cart_usecase.dart';
+import '../../domain/usecases/cart/get_cart_items_usecase.dart';
+import '../../core/usecases/usecase.dart';
 
 class CartProvider extends ChangeNotifier {
   List<CartItem> _items = [];
@@ -14,11 +16,13 @@ class CartProvider extends ChangeNotifier {
   final AddToCartUseCase addToCartUseCase;
   final RemoveFromCartUseCase removeFromCartUseCase;
   final UpdateCartUseCase updateCartUseCase;
+  final GetCartItemsUseCase getCartItemsUseCase;
 
   CartProvider({
     required this.addToCartUseCase,
     required this.removeFromCartUseCase,
     required this.updateCartUseCase,
+    required this.getCartItemsUseCase,
   });
 
   // Getters
@@ -38,9 +42,17 @@ class CartProvider extends ChangeNotifier {
   Future<void> initializeCart() async {
     _setLoading(true);
     try {
-      // This would typically load from local storage or API
-      // For now, we'll keep it empty
-      _items = [];
+      final result = await getCartItemsUseCase(NoParams());
+      result.fold(
+        (failure) {
+          debugPrint('Error loading cart: ${failure.message}');
+          _items = [];
+        },
+        (items) {
+          _items = items;
+        },
+      );
+      notifyListeners();
     } catch (e) {
       debugPrint('Error initializing cart: $e');
       _items = [];
