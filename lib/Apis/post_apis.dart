@@ -376,7 +376,6 @@ class PostApiServer {
     var res = await request.send();
     var response = await res.stream.bytesToString();
     dynamic data = jsonDecode(response);
-
     return data;
   }
 
@@ -405,5 +404,178 @@ class PostApiServer {
     dynamic data = jsonDecode(response);
 
     return data;
+  }
+
+  Future connectStripeAccountApi(body) async {
+    try {
+      // Primary endpoint - now that it's deployed
+      String url = Utils.baseUrl() + 'connect_stripe_account.php';
+      
+      print('=== STRIPE CONNECT API CALL ===');
+      print('Endpoint: connect_stripe_account.php');
+      print('Full URL: $url');
+      print('Body: $body');
+      print('Method: POST');
+      print('===============================');
+      
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll(body);
+      
+      print('Sending request...');
+      var res = await request.send();
+      
+      print('Response status code: ${res.statusCode}');
+      print('Response headers: ${res.headers}');
+      
+      // Check HTTP status code
+      if (res.statusCode == 404) {
+        print('ERROR: 404 - Endpoint not found');
+        return {
+          'success': 'false',
+          'msg': 'Server endpoint not found. Please verify that connect_stripe_account.php is uploaded to the server.',
+          'error': '404 Not Found',
+          'url': url
+        };
+      } else if (res.statusCode >= 500) {
+        print('ERROR: ${res.statusCode} - Server error');
+        var errorResponse = await res.stream.bytesToString();
+        print('Error response: $errorResponse');
+        
+        // Prova a parsare la risposta JSON per ottenere il messaggio reale
+        try {
+          var errorData = jsonDecode(errorResponse);
+          String errorMsg = errorData['msg']?.toString() ?? 
+                          errorData['message']?.toString() ?? 
+                          'Server error. Please check server logs or contact support.';
+          
+          print('Error data from server: $errorData');
+          
+          // Se il messaggio contiene informazioni su Stripe SDK, mostralo
+          if (errorMsg.contains('Stripe PHP SDK') || 
+              errorMsg.contains('stripe_sdk_missing') ||
+              errorData['error']?.toString() == 'stripe_sdk_missing') {
+            // Include debug info se disponibile
+            String fullMsg = errorMsg;
+            if (errorData['debug'] != null) {
+              fullMsg += '\n\nDebug info: ${errorData['debug']}';
+            }
+            return {
+              'success': 'false',
+              'msg': fullMsg,
+              'error': 'HTTP ${res.statusCode}',
+              'url': url,
+              'stripe_sdk_missing': true,
+              'debug': errorData['debug']
+            };
+          }
+          
+          return {
+            'success': 'false',
+            'msg': errorMsg,
+            'error': 'HTTP ${res.statusCode}',
+            'url': url,
+            'server_response': errorData
+          };
+        } catch (e) {
+          // Se non è JSON, usa il messaggio generico
+          String rawResponse = errorResponse.length > 200 
+              ? errorResponse.substring(0, 200) 
+              : errorResponse;
+          return {
+            'success': 'false',
+            'msg': 'Server error. Please check server logs or contact support.',
+            'error': 'HTTP ${res.statusCode}',
+            'url': url,
+            'raw_response': rawResponse
+          };
+        }
+      } else if (res.statusCode != 200) {
+        print('ERROR: ${res.statusCode} - Unexpected status code');
+        var errorResponse = await res.stream.bytesToString();
+        print('Error response: $errorResponse');
+        return {
+          'success': 'false',
+          'msg': 'Server returned unexpected status code (${res.statusCode}). Please contact support.',
+          'error': 'HTTP ${res.statusCode}',
+          'url': url
+        };
+      }
+      
+      var response = await res.stream.bytesToString();
+      print('Response body: ${response.length > 1000 ? response.substring(0, 1000) + "..." : response}');
+      
+      // Check if response is empty
+      if (response.trim().isEmpty) {
+        print('ERROR: Empty response');
+        return {
+          'success': 'false',
+          'msg': 'Empty response from server. Please check server configuration.',
+          'error': 'Empty response',
+          'url': url
+        };
+      }
+      
+      // Check if response is HTML (error page)
+      if (response.trim().startsWith('<!DOCTYPE') || 
+          response.trim().startsWith('<html') ||
+          response.trim().startsWith('<?xml')) {
+        print('ERROR: HTML response received (server error page)');
+        String preview = response.length > 300 
+            ? response.substring(0, 300) 
+            : response;
+        print('Response preview: $preview');
+        return {
+          'success': 'false',
+          'msg': 'Server returned HTML instead of JSON. Please check if Stripe PHP SDK is installed correctly.',
+          'error': 'HTML response received instead of JSON',
+          'url': url
+        };
+      }
+      
+      // Try to parse JSON
+      try {
+        dynamic data = jsonDecode(response);
+        print('✅ Successfully parsed JSON response');
+        print('Response data: $data');
+        
+        // Return the response (success or error)
+        return data;
+      } catch (e) {
+        // If JSON parsing fails
+        print('ERROR: JSON parsing failed: $e');
+        String preview = response.length > 500 
+            ? response.substring(0, 500) 
+            : response;
+        print('Response that failed to parse: $preview');
+        String rawResponse = response.length > 200 
+            ? response.substring(0, 200) 
+            : response;
+        return {
+          'success': 'false',
+          'msg': 'Invalid JSON response from server. Please check server configuration.',
+          'error': 'JSON parsing failed: ${e.toString()}',
+          'url': url,
+          'raw_response': rawResponse
+        };
+      }
+    } catch (e) {
+      // Handle network errors
+      print('EXCEPTION: $e');
+      String errorMsg = 'Network error occurred';
+      if (e.toString().contains('SocketException') || 
+          e.toString().contains('Failed host lookup')) {
+        errorMsg = 'No internet connection. Please check your network.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMsg = 'Connection timeout. Please try again.';
+      } else {
+        errorMsg = 'Network error: ${e.toString()}';
+      }
+      
+      return {
+        'success': 'false',
+        'msg': errorMsg,
+        'error': e.toString()
+      };
+    }
   }
 }

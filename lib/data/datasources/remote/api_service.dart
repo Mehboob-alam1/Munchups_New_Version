@@ -37,6 +37,7 @@ abstract class RemoteDataSource {
     Map<String, dynamic> body,
     String? imagePath,
   );
+  Future<Map<String, dynamic>> connectStripeAccount(Map<String, dynamic> body);
 }
 
 class RemoteDataSourceImpl implements RemoteDataSource {
@@ -623,6 +624,42 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       }
       return data;
     } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> connectStripeAccount(Map<String, dynamic> body) async {
+    try {
+      final formData = FormData.fromMap(body);
+      final response = await dio.post(
+        'connect_stripe_account.php',
+        data: formData,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final data = _ensureJsonMap(response);
+      final bool isSuccess =
+          data['success']?.toString().toLowerCase() == 'true';
+      if (!isSuccess) {
+        throw ServerException(data['msg']?.toString() ?? 
+                             data['message']?.toString() ?? 
+                             'Failed to connect Stripe account');
+      }
+      return data;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw ServerException('Server endpoint not found. Please contact customer support.');
+      } else if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
+        throw ServerException('Server error. Please contact customer support.');
+      }
       throw ServerException(e.message ?? 'Network error');
     } catch (e) {
       throw ServerException(e.toString());

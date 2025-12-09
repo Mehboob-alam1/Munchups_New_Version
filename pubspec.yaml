@@ -46,7 +46,7 @@ dependencies:
   http: ^1.2.1
   # url_launcher: ^6.2.6
   flutter_rating_bar: ^4.0.1
-  flutter_stripe: ^11.5.0
+  flutter_stripe: ^12.1.1
   country_picker: ^2.0.26
   google_places_flutter: ^2.0.8
   permission_handler: ^12.0.1

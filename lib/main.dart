@@ -56,12 +56,17 @@ void main() async {
   }
 
   try {
-    Stripe.publishableKey =
-    'pk_live_51I59QPKSvZKZ5ivnEEOI3it3x12CoZWG3fDpHyG1vQ8zql6qvOwDfLYQpRZDmxGnpsvkRYuoJNVHK3Ocd3EfWaPw00KKlxnIVk';
+    // Initialize Stripe with publishable key
+    Stripe.publishableKey = 'pk_test_Qv6FioIn5wfwiVyeQ059x3TQ';
+    
+    // Apply settings (required for flutter_stripe 12.x)
     await Stripe.instance.applySettings();
-    log('✅ Stripe initialized');
+    
+    log('✅ Stripe initialized with publishable key');
+    log('📝 Note: Secret key (sk_test_...) must be used ONLY on backend server');
   } catch (e) {
     log('❌ Error initializing Stripe: $e');
+    log('⚠️ Stripe features may not work correctly');
   }
 
   runApp(
