@@ -346,9 +346,25 @@ class _ManageAccountPageForChefAndGrocerState
         if (accountLink != null && accountLink.isNotEmpty) {
           // Save account ID if provided
           if (response['account_id'] != null) {
+            final newAccountId = response['account_id'].toString();
+
+            // Update local state
             setState(() {
-              stripeAccountId = response['account_id'].toString();
+              stripeAccountId = newAccountId;
             });
+
+            // Persist updated user data in SharedPreferences
+            try {
+              final prefs = await SharedPreferences.getInstance();
+              final raw = prefs.getString('data');
+              if (raw != null) {
+                final current = jsonDecode(raw);
+                current['stripe_account_id'] = newAccountId;
+                await prefs.setString('data', jsonEncode(current));
+              }
+            } catch (e) {
+              log('Error updating local user data with stripe_account_id: $e');
+            }
           }
 
           // Mark that we're opening Stripe (so we can refresh when app resumes)

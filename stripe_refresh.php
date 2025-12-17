@@ -1,40 +1,11 @@
 <?php
 /**
- * Stripe Refresh URL Handler
- * 
- * Questo file gestisce il refresh quando l'utente deve completare più informazioni
- * URL: https://munchups.com/webservice/stripe_refresh.php
+ * stripe_refresh.php
+ * Refreshes Stripe Connect onboarding link
  */
 
-header('Content-Type: text/html; charset=utf-8');
+require_once 'stripe_config.php';
 
-// Carica Stripe SDK
-$stripe_loaded = false;
-$direct_path = __DIR__ . '/stripe-php/init.php';
-if (file_exists($direct_path)) {
-    require_once $direct_path;
-    if (class_exists('\Stripe\Stripe')) {
-        $stripe_loaded = true;
-    }
-}
-
-if (!$stripe_loaded) {
-    $composer_path = __DIR__ . '/vendor/autoload.php';
-    if (file_exists($composer_path)) {
-        require_once $composer_path;
-        $stripe_loaded = true;
-    }
-}
-
-if (!$stripe_loaded) {
-    die('Stripe SDK not loaded');
-}
-
-// Configura Stripe
-$stripe_secret_key = 'sk_test_N950jTKYw562aEty72yLlaEZ';
-\Stripe\Stripe::setApiKey($stripe_secret_key);
-
-// Ricevi parametri da Stripe
 $account_id = $_GET['account'] ?? '';
 
 ?>
@@ -129,4 +100,3 @@ $account_id = $_GET['account'] ?? '';
     </script>
 </body>
 </html>
-
