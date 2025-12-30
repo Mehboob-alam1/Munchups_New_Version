@@ -48,8 +48,8 @@ class _ManageAccountPageForChefAndGrocerState
       log('App resumed after Stripe - refreshing user data...');
       _hasOpenedStripe = false;
       
-      // Aspetta un po' per assicurarsi che Stripe abbia completato
-      Future.delayed(const Duration(seconds: 2), () {
+      // Aspetta un po' per assicurarsi che Stripe abbia completato e il backend sia aggiornato
+      Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           refreshUserData();
         }
@@ -82,21 +82,29 @@ class _ManageAccountPageForChefAndGrocerState
           final profileData = await GetApiServer().getProfileApi(context);
           log('Profile data refreshed: $profileData');
           
-          if (profileData != null && profileData['success'] == 'true') {
+          if (profileData != null && 
+              (profileData['success'] == 'true' || profileData['success'] == true)) {
             // Aggiorna i dati locali
-            final updatedUserData = profileData['profile_data'] ?? profileData['data'] ?? profileData;
+            final updatedUserData = profileData['profile_data'] ?? 
+                                   profileData['data'] ?? 
+                                   profileData;
             
             // Salva i dati aggiornati
             await prefs.setString('data', jsonEncode(updatedUserData));
             
             // Ricarica i dati nella UI
+            final newStripeAccountId = updatedUserData['stripe_account_id']?.toString();
+            final wasConnected = stripeAccountId != null && stripeAccountId!.isNotEmpty;
+            final isNowConnected = newStripeAccountId != null && newStripeAccountId!.isNotEmpty;
+            
             setState(() {
               userData = updatedUserData;
-              stripeAccountId = updatedUserData['stripe_account_id']?.toString();
+              stripeAccountId = newStripeAccountId;
             });
             
             if (mounted) {
-              if (stripeAccountId != null && stripeAccountId!.isNotEmpty) {
+              // Only show success message if account was just connected
+              if (isNowConnected && !wasConnected) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('✅ Stripe account connected successfully!'),
@@ -104,20 +112,17 @@ class _ManageAccountPageForChefAndGrocerState
                     duration: const Duration(seconds: 3),
                   ),
                 );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Stripe account status updated.'),
-                    backgroundColor: DynamicColor.primaryColor,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
               }
             }
+          } else {
+            // API returned error, but don't show error to user - just reload local data
+            log('Profile API returned error: ${profileData?['msg'] ?? 'Unknown error'}');
+            getUserDetail();
           }
         } catch (e) {
           log('Error fetching profile: $e');
-          // Fallback: ricarica solo i dati locali
+          // Don't show error to user - just reload local data silently
+          // The account might still be connected, just the API call failed
           getUserDetail();
         }
         
@@ -127,6 +132,8 @@ class _ManageAccountPageForChefAndGrocerState
       }
     } catch (e) {
       log('Error refreshing user data: $e');
+      // Don't show error to user - just reload local data
+      getUserDetail();
       setState(() {
         isLoading = false;
       });

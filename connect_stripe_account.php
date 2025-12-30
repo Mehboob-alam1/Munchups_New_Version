@@ -37,12 +37,23 @@ try {
     // NOTE: we use only user_master to avoid missing table errors (no chef_master table)
     $stripe_account_id = null;
 
-    $stmt = $pdo->prepare("SELECT stripe_account_id FROM user_master WHERE user_id = ? AND user_type = ?");
-    $stmt->execute([$user_id, $user_type]);
-    $user = $stmt->fetch();
+    // First, check if stripe_account_id column exists
+    try {
+        $stmt = $pdo->prepare("SELECT stripe_account_id FROM user_master WHERE user_id = ? AND user_type = ?");
+        $stmt->execute([$user_id, $user_type]);
+        $user = $stmt->fetch();
 
-    if ($user && !empty($user['stripe_account_id'])) {
-        $stripe_account_id = $user['stripe_account_id'];
+        if ($user && !empty($user['stripe_account_id'])) {
+            $stripe_account_id = $user['stripe_account_id'];
+        }
+    } catch (PDOException $e) {
+        // Column might not exist yet - that's OK, we'll create it when saving
+        if (strpos($e->getMessage(), 'stripe_account_id') === false) {
+            // If it's a different error, log it
+            logErrorSecure('Error checking existing Stripe account: ' . $e->getMessage(), ['user_id' => $user_id]);
+        }
+        // Continue to create new account
+        $stripe_account_id = null;
     }
     
     if ($stripe_account_id) {
@@ -73,7 +84,11 @@ try {
             }
         } catch (Exception $e) {
             // Account might be invalid, create new one
-            logError('Error retrieving Stripe account: ' . $e->getMessage(), ['user_id' => $user_id]);
+            if (function_exists('logError')) {
+                logError('Error retrieving Stripe account: ' . $e->getMessage(), ['user_id' => $user_id]);
+            } else {
+                logErrorSecure('Error retrieving Stripe account: ' . $e->getMessage(), ['user_id' => $user_id]);
+            }
             $stripe_account_id = null;
         }
     }
@@ -98,8 +113,31 @@ try {
         $stripe_account_id = $account->id;
         
         // Save Stripe account ID to database (only user_master is used)
-        $stmt = $pdo->prepare("UPDATE user_master SET stripe_account_id = ?, updated_at = NOW() WHERE user_id = ? AND user_type = ?");
-        $stmt->execute([$stripe_account_id, $user_id, $user_type]);
+        // Try to update stripe_account_id column (it might not exist yet)
+        try {
+            // First, try to add the column if it doesn't exist
+            try {
+                $pdo->exec("ALTER TABLE user_master ADD COLUMN stripe_account_id VARCHAR(255) NULL");
+            } catch (PDOException $e) {
+                // Column might already exist, that's OK
+                if (strpos($e->getMessage(), 'Duplicate column') === false && 
+                    strpos($e->getMessage(), 'already exists') === false) {
+                    // Only log if it's a different error
+                    logErrorSecure('Error adding stripe_account_id column: ' . $e->getMessage(), ['user_id' => $user_id]);
+                }
+            }
+            
+            // Now update the account ID (without updated_at since it might not exist)
+            $stmt = $pdo->prepare("UPDATE user_master SET stripe_account_id = ? WHERE user_id = ? AND user_type = ?");
+            $stmt->execute([$stripe_account_id, $user_id, $user_type]);
+        } catch (PDOException $e) {
+            // Log the error but don't fail - the account is created in Stripe
+            logErrorSecure('Error saving stripe_account_id to database: ' . $e->getMessage(), [
+                'user_id' => $user_id,
+                'stripe_account_id' => $stripe_account_id
+            ]);
+            // Continue anyway - the account is created in Stripe
+        }
         
         // Create account link for onboarding
         $accountLink = \Stripe\AccountLink::create([
