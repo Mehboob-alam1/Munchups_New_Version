@@ -198,31 +198,63 @@ class PostApiServer {
   // Chef Apis
 
   Future postDishApi(body, File image1, File image2, File image3) async {
-    String url = Utils.baseUrl() + 'post_dish_or_item.php';
+    try {
+      String url = Utils.baseUrl() + 'post_dish_or_item.php';
+      
+      print('=== POST DISH API CALL ===');
+      print('URL: $url');
+      print('Body: $body');
+      print('Body keys: ${body.keys.toList()}');
+      print('user_id in body: ${body['user_id']}');
+      print('type in body: ${body['type']}');
 
-    final request = http.MultipartRequest('POST', Uri.parse(url));
-    request.fields.addAll(body);
-    if (image1.path.isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath(
-          'images[]', image1.path,
-          filename: image1.path.split('/').last));
-    }
-    if (image2.path.isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath(
-          'images[]', image2.path,
-          filename: image2.path.split('/').last));
-    }
-    if (image3.path.isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath(
-          'images[]', image3.path,
-          filename: image3.path.split('/').last));
-    }
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      
+      // Add each field individually to ensure they're all included
+      body.forEach((key, value) {
+        if (value != null && value.toString().isNotEmpty) {
+          request.fields[key] = value.toString();
+          print('Added field: $key = $value');
+        } else {
+          print('Skipping empty field: $key');
+        }
+      });
+      
+      if (image1.path.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'images[]', image1.path,
+            filename: image1.path.split('/').last));
+        print('Image 1 added: ${image1.path}');
+      }
+      if (image2.path.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'images[]', image2.path,
+            filename: image2.path.split('/').last));
+        print('Image 2 added: ${image2.path}');
+      }
+      if (image3.path.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'images[]', image3.path,
+            filename: image3.path.split('/').last));
+        print('Image 3 added: ${image3.path}');
+      }
 
-    var res = await request.send();
-    var response = await res.stream.bytesToString();
-    dynamic data = jsonDecode(response);
-
-    return data;
+      var res = await request.send();
+      var response = await res.stream.bytesToString();
+      
+      print('Response status: ${res.statusCode}');
+      print('Response body: $response');
+      
+      dynamic data = jsonDecode(response);
+      return data;
+    } catch (e) {
+      print('Error in postDishApi: $e');
+      return {
+        'success': 'false',
+        'msg': 'Failed to post dish: ${e.toString()}',
+        'error': e.toString()
+      };
+    }
   }
 
   Future updateDishApi(body, File image1, File image2, File image3) async {
@@ -404,6 +436,40 @@ class PostApiServer {
     dynamic data = jsonDecode(response);
 
     return data;
+  }
+
+  Future updateStripeStatusApi(body) async {
+    try {
+      String url = Utils.baseUrl() + 'update_stripe_status.php';
+      
+      print('=== UPDATE STRIPE STATUS API CALL ===');
+      print('Endpoint: update_stripe_status.php');
+      print('Full URL: $url');
+      print('Body: $body');
+      print('Method: POST');
+      print('====================================');
+      
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll(body);
+      
+      print('Sending request...');
+      var res = await request.send();
+      
+      print('Response status code: ${res.statusCode}');
+      
+      var response = await res.stream.bytesToString();
+      print('Response body: $response');
+      
+      dynamic data = jsonDecode(response);
+      return data;
+    } catch (e) {
+      print('Error in updateStripeStatusApi: $e');
+      return {
+        'success': 'false',
+        'msg': 'Failed to update Stripe status: ${e.toString()}',
+        'error': e.toString()
+      };
+    }
   }
 
   Future connectStripeAccountApi(body) async {

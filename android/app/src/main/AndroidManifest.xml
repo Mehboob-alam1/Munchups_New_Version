@@ -2,7 +2,8 @@
     <application
         android:label="munchups_app"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/NormalTheme">
 
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyArVg2eeb6UbZtIgSHLEqUpHD1Itj5nYsw"/>

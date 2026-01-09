@@ -77,7 +77,29 @@ class _ManageAccountPageForChefAndGrocerState
           isLoading = true;
         });
         
-        // Chiama l'API per ottenere il profilo aggiornato dal server
+        // First, update the connect_flag via update_stripe_status.php
+        try {
+          log('Calling update_stripe_status.php to update connect_flag...');
+          final updateStatusBody = {
+            'user_id': userData['user_id'].toString(),
+            'user_type': userType,
+          };
+          
+          final updateResponse = await PostApiServer().updateStripeStatusApi(updateStatusBody);
+          log('Update status response: $updateResponse');
+          
+          if (updateResponse['success'] == 'true' || updateResponse['success'] == true) {
+            log('✅ connect_flag updated successfully');
+          } else {
+            log('⚠️ Update status returned error: ${updateResponse['msg'] ?? 'Unknown error'}');
+            // Continue anyway - might already be updated
+          }
+        } catch (e) {
+          log('Error updating stripe status: $e');
+          // Continue anyway - not critical
+        }
+        
+        // Then, call the API to get the updated profile from the server
         try {
           final profileData = await GetApiServer().getProfileApi(context);
           log('Profile data refreshed: $profileData');
@@ -346,34 +368,36 @@ class _ManageAccountPageForChefAndGrocerState
 
       // Check if response indicates success
       if (response['success'] == 'true' || response['success'] == true) {
+        // Save account ID if provided
+        if (response['account_id'] != null) {
+          final newAccountId = response['account_id'].toString();
+
+          // Update local state
+          setState(() {
+            stripeAccountId = newAccountId;
+          });
+
+          // Persist updated user data in SharedPreferences
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final raw = prefs.getString('data');
+            if (raw != null) {
+              final current = jsonDecode(raw);
+              current['stripe_account_id'] = newAccountId;
+              await prefs.setString('data', jsonEncode(current));
+            }
+          } catch (e) {
+            log('Error updating local user data with stripe_account_id: $e');
+          }
+        }
+        
+        // Check if account link URL is provided (for new onboarding)
         final accountLink = response['account_link_url']?.toString() ?? 
                            response['url']?.toString() ?? 
                            response['link']?.toString();
         
         if (accountLink != null && accountLink.isNotEmpty) {
-          // Save account ID if provided
-          if (response['account_id'] != null) {
-            final newAccountId = response['account_id'].toString();
-
-            // Update local state
-            setState(() {
-              stripeAccountId = newAccountId;
-            });
-
-            // Persist updated user data in SharedPreferences
-            try {
-              final prefs = await SharedPreferences.getInstance();
-              final raw = prefs.getString('data');
-              if (raw != null) {
-                final current = jsonDecode(raw);
-                current['stripe_account_id'] = newAccountId;
-                await prefs.setString('data', jsonEncode(current));
-              }
-            } catch (e) {
-              log('Error updating local user data with stripe_account_id: $e');
-            }
-          }
-
+          // Account needs onboarding - open Stripe link
           // Mark that we're opening Stripe (so we can refresh when app resumes)
           _hasOpenedStripe = true;
 
@@ -391,7 +415,27 @@ class _ManageAccountPageForChefAndGrocerState
             );
           }
         } else {
-          throw Exception('No account link URL received from server');
+          // Account is already connected - no need to open Stripe
+          log('Account is already connected - no onboarding needed');
+          
+          // Refresh user data to ensure UI is updated
+          if (mounted) {
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('✅ Stripe account is already connected!'),
+                backgroundColor: DynamicColor.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            
+            // Refresh the UI after a short delay
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                getUserDetail();
+              }
+            });
+          }
         }
       } else {
         // Extract error message from response

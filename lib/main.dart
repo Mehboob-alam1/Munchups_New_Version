@@ -55,19 +55,11 @@ void main() async {
     log('❌ Stack trace: ${StackTrace.current}');
   }
 
-  try {
-    // Initialize Stripe with publishable key
-    Stripe.publishableKey = 'pk_test_Qv6FioIn5wfwiVyeQ059x3TQ';
-    
-    // Apply settings (required for flutter_stripe 12.x)
-    await Stripe.instance.applySettings();
-    
-    log('✅ Stripe initialized with publishable key');
-    log('📝 Note: Secret key (sk_test_...) must be used ONLY on backend server');
-  } catch (e) {
-    log('❌ Error initializing Stripe: $e');
-    log('⚠️ Stripe features may not work correctly');
-  }
+  // DON'T initialize Stripe here - it checks theme too early
+  // Initialize it later when actually needed (lazy initialization)
+  // Just set the publishable key for now
+  Stripe.publishableKey = 'pk_test_Qv6FioIn5wfwiVyeQ059x3TQ';
+  log('📝 Stripe publishable key set (will initialize when needed)');
 
   runApp(
     MultiProvider(

@@ -13,6 +13,9 @@ import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Auth/login.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../../../domain/entities/cart_item.dart';
+import '../../../presentation/providers/cart_provider.dart';
 
 class DetailPage extends StatefulWidget {
   dynamic userData;
@@ -39,7 +42,6 @@ class _DetailPageState extends State<DetailPage> {
 
   dynamic dishData;
   dynamic userData;
-  dynamic checkItemLocal;
 
   @override
   void initState() {
@@ -56,15 +58,23 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void getCartItem() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      checkItemLocal = jsonDecode(prefs.getString('cart').toString());
-      if (checkItemLocal != null) {
-        if (checkItemLocal['dish_id'] == dishData['dish_id']) {
-          countPrice = checkItemLocal['total_price'];
-        }
+    if (!mounted) return;
+    try {
+      final cartProvider = context.read<CartProvider>();
+      await cartProvider.initializeCart();
+      if (mounted) {
+        setState(() {
+          final isInCart = cartProvider.isItemInCart(dishData['dish_id'].toString());
+          if (isInCart) {
+            final quantity = cartProvider.getItemQuantity(dishData['dish_id'].toString());
+            count = quantity;
+            countPrice = double.parse(dishData['dish_price']) * count;
+          }
+        });
       }
-    });
+    } catch (e) {
+      log('Error getting cart item: $e');
+    }
   }
 
   @override
@@ -330,11 +340,7 @@ class _DetailPageState extends State<DetailPage> {
           ),
           onPressed: () {
             if (widget.guestUserData != null) {
-              if (checkItemLocal == null) {
-                addToCartApiCall();
-              } else {
-                Utils().myToast(context, msg: 'Item already added!');
-              }
+              addToCartApiCall();
             } else {
               PageNavigateScreen().push(context, const LoginPage());
             }
@@ -343,30 +349,55 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void addToCartApiCall() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    
     try {
-      dynamic body = {
-        'user_id': userData['user_id'],
-        'chef_grocer_id': dishData['chef_id'],
-        'dish_id': dishData['dish_id'],
-        'dish_name': dishData['dish_name'],
-        'dish_image': dishData['dish_images'] == 'NA'
-            ? ''
-            : dishData['dish_images'][0]['kitchen_image'],
-        'quantity': count,
-        'dish_price': double.parse(dishData['dish_price']),
-        'total_price': countPrice == 0.0
-            ? double.parse(dishData['dish_price'])
-            : countPrice,
-      };
-
-      prefs.setString('cart', jsonEncode(body));
-      Utils().myToast(context, msg: 'Item added succesfully');
-      Timer(const Duration(milliseconds: 500), () {
-        PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
-      });
+      final cartProvider = context.read<CartProvider>();
+      
+      // Get seller name from userData
+      String sellerName = 'Unknown';
+      if (userData['shop_name'] != null && userData['shop_name'].toString().isNotEmpty && userData['shop_name'] != 'NA') {
+        sellerName = userData['shop_name'].toString();
+      } else if (userData['full_name'] != null && userData['full_name'].toString().isNotEmpty) {
+        sellerName = userData['full_name'].toString();
+      } else if (userData['first_name'] != null && userData['last_name'] != null) {
+        sellerName = '${userData['first_name']} ${userData['last_name']}';
+      } else if (userData['user_name'] != null && userData['user_name'].toString().isNotEmpty) {
+        sellerName = userData['user_name'].toString();
+      }
+      
+      // Create CartItem
+      final cartItem = CartItem(
+        id: dishData['dish_id'].toString(),
+        name: dishData['dish_name'].toString(),
+        image: (dishData['dish_images'] != null && 
+                dishData['dish_images'] != 'NA' && 
+                dishData['dish_images'].isNotEmpty)
+            ? dishData['dish_images'][0]['kitchen_image'].toString()
+            : '',
+        price: double.parse(dishData['dish_price'].toString()),
+        quantity: count,
+        sellerId: dishData['chef_id'].toString(),
+        sellerType: 'chef',
+        sellerName: sellerName,
+      );
+      
+      // Add to cart using CartProvider
+      await cartProvider.addItem(cartItem);
+      
+      if (mounted) {
+        Utils().myToast(context, msg: 'Item added successfully');
+        Timer(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
+          }
+        });
+      }
     } catch (e) {
       log('cart error = ' + e.toString());
+      if (mounted) {
+        Utils().myToast(context, msg: 'Error adding item to cart');
+      }
     }
   }
 }

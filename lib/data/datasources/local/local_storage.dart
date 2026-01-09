@@ -74,9 +74,45 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<List<Map<String, dynamic>>> getCartData() async {
     final data = sharedPreferences.getString('cart');
-    if (data != null) {
-      final List<dynamic> jsonList = jsonDecode(data);
-      return jsonList.map((json) => Map<String, dynamic>.from(json)).toList();
+    if (data != null && data.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(data);
+        
+        // Handle legacy format (single object) - migrate to new format (list)
+        if (decoded is Map<String, dynamic>) {
+          // Old format: single object with keys like dish_id, chef_grocer_id, etc.
+          // Convert to new format
+          final migratedItem = <String, dynamic>{
+            'id': decoded['dish_id']?.toString() ?? '',
+            'name': decoded['dish_name']?.toString() ?? '',
+            'image': decoded['dish_image']?.toString() ?? '',
+            'price': (decoded['dish_price'] ?? decoded['total_price'] ?? 0.0).toDouble(),
+            'quantity': (decoded['quantity'] ?? 1) as int,
+            'seller_id': decoded['chef_grocer_id']?.toString() ?? '',
+            'seller_type': 'chef', // Default to chef, can't determine from old format
+            'seller_name': 'Unknown',
+          };
+          
+          // Save migrated data (convert to new format)
+          await sharedPreferences.setString('cart', jsonEncode([migratedItem]));
+          return [migratedItem];
+        }
+        
+        // New format: list of objects
+        if (decoded is List) {
+          final List<Map<String, dynamic>> result = [];
+          for (var item in decoded) {
+            if (item is Map) {
+              result.add(Map<String, dynamic>.from(item));
+            }
+          }
+          return result;
+        }
+      } catch (e) {
+        // If parsing fails, clear corrupted data
+        await sharedPreferences.remove('cart');
+        return [];
+      }
     }
     return [];
   }

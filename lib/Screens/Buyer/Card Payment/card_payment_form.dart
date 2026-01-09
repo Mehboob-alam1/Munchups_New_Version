@@ -241,43 +241,92 @@ class _CardPaymentFormPageState extends State<CardPaymentFormPage> {
     try {
       Utils().showSpinner(context);
 
+      // Initialize Stripe right before use to ensure theme is ready
+      try {
+        await Stripe.instance.applySettings();
+        log('✅ Stripe initialized successfully for card payment');
+      } catch (stripeInitError) {
+        log('❌ Stripe initialization error: $stripeInitError');
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Stripe initialization failed. Please restart the app.');
+        return;
+      }
+
+      log('📝 Creating card details...');
+      log('Card number length: ${cardNumberController.text.trim().length}');
+      log('Expiry month: $expairyMonth, Year: $expairyYear');
+      log('CVV length: ${cvvController.text.length}');
+
+      // Validate card details before proceeding
+      if (cardNumberController.text.trim().isEmpty) {
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Please enter card number');
+        log('❌ Card number is empty');
+        return;
+      }
+
+      if (expairyMonth == 0 || expairyYear == 0) {
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Please select expiry date');
+        log('❌ Expiry date not selected');
+        return;
+      }
+
+      if (cvvController.text.isEmpty || cvvController.text.length < 3) {
+        Utils().stopSpinner(context);
+        Utils().myToast(context, msg: 'Please enter valid CVV');
+        log('❌ CVV is invalid');
+        return;
+      }
+
       final cardDetails = CardDetails(
-        number: cardNumberController.text.trim(),
+        number: cardNumberController.text.trim().replaceAll(' ', ''),
         expirationMonth: expairyMonth,
         expirationYear: expairyYear,
         cvc: cvvController.text,
       );
+      
+      log('📝 Card details created, saving...');
       saveCardDetail(cardDetails.toJson());
+      
+      log('📝 Updating Stripe with card details...');
       Stripe.instance.dangerouslyUpdateCardDetails(cardDetails);
 
+      log('📝 Creating billing details...');
       final billingDetails = BillingDetails(
-        email: userData['email'],
-        name: userData['user_name'],
-        phone: userData['phone'],
+        email: userData['email'] ?? '',
+        name: userData['user_name'] ?? '',
+        phone: userData['phone'] ?? '',
         address: Address(
           country: '',
           //userData['country'],
-          state: userData['state'],
-          city: userData['city'],
-          line1: userData['address'],
+          state: userData['state'] ?? '',
+          city: userData['city'] ?? '',
+          line1: userData['address'] ?? '',
           line2: '',
-          postalCode: userData['postal_code'],
+          postalCode: userData['postal_code'] ?? '',
         ),
       );
 
+      log('📝 Creating payment method with Stripe...');
       /// create payment method
       final paymentMethod = await Stripe.instance.createPaymentMethod(
           params: PaymentMethodParams.card(
               paymentMethodData:
                   PaymentMethodData(billingDetails: billingDetails)));
+      
+      log('✅ Payment method created: ${paymentMethod.id}');
       setState(() {
         stripeToken = paymentMethod.id;
       });
+      
+      log('📝 Calling customerTokenAPiCall with token: ${paymentMethod.id}');
       customerTokenAPiCall(context, paymentMethod.id);
-    } catch (e) {
+    } catch (e, stackTrace) {
       Utils().stopSpinner(context);
-      Utils().myToast(context, msg: e.toString());
-      log(e.toString());
+      log('❌ Error in getStripeToken: $e');
+      log('❌ Stack trace: $stackTrace');
+      Utils().myToast(context, msg: 'Error: ${e.toString()}');
     }
   }
 

@@ -127,7 +127,14 @@ class _ChefPostDishFormState extends State<ChefPostDishForm> {
   getUsertype() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      userData = jsonDecode(prefs.getString('data').toString());
+      String? dataString = prefs.getString('data');
+      if (dataString != null && dataString.isNotEmpty) {
+        userData = jsonDecode(dataString);
+        print('User data loaded: user_id = ${userData?['user_id']}');
+      } else {
+        print('ERROR: No user data found in SharedPreferences');
+        userData = null;
+      }
     });
   }
 
@@ -466,10 +473,39 @@ class _ChefPostDishFormState extends State<ChefPostDishForm> {
   }
 
   void postDishApiCall(context) async {
+    // Validate userData
+    print('=== POST DISH VALIDATION ===');
+    print('userData: $userData');
+    print('userData type: ${userData.runtimeType}');
+    print('userData[\'user_id\']: ${userData?['user_id']}');
+    
+    if (userData == null) {
+      print('ERROR: userData is null');
+      Utils().myToast(context, msg: 'User data not found. Please login again.');
+      return;
+    }
+    
+    if (userData['user_id'] == null) {
+      print('ERROR: user_id is null in userData');
+      Utils().myToast(context, msg: 'User ID not found. Please login again.');
+      return;
+    }
+
     Utils().showSpinner(context);
 
+    // Ensure user_id is converted to string
+    String userIdStr = userData['user_id'].toString();
+    print('user_id as string: $userIdStr');
+    
+    if (userIdStr.isEmpty || userIdStr == 'null') {
+      print('ERROR: user_id is empty or null');
+      Utils().stopSpinner(context);
+      Utils().myToast(context, msg: 'Invalid user ID. Please login again.');
+      return;
+    }
+
     dynamic body = {
-      'user_id': userData['user_id'].toString(),
+      'user_id': userIdStr,
       'type': 'chef',
       'name': dishName.trim(),
       'meal': selectMeal.toString().toLowerCase(),
@@ -484,6 +520,14 @@ class _ChefPostDishFormState extends State<ChefPostDishForm> {
       'description': description.trim(),
     };
 
+    // Debug: Print body to verify data
+    print('=== POST DISH BODY ===');
+    print('Full body: $body');
+    print('user_id: ${body['user_id']} (type: ${body['user_id'].runtimeType})');
+    print('type: ${body['type']}');
+    print('name: ${body['name']}');
+    print('price: ${body['price']}');
+
     try {
       await PostApiServer()
           .postDishApi(body, imageFile, imageFile2, imageFile3)
@@ -491,20 +535,30 @@ class _ChefPostDishFormState extends State<ChefPostDishForm> {
         FocusScope.of(context).requestFocus(FocusNode());
         Utils().stopSpinner(context);
 
-        if (value['success'] == 'true') {
+        if (value['success'] == 'true' || value['success'] == true) {
           imageFile = File('');
           imageFile2 = File('');
           imageFile3 = File('');
-          Utils().myToast(context, msg: value['msg']);
+          Utils().myToast(context, msg: value['msg'] ?? 'Dish posted successfully');
 
           Timer(const Duration(milliseconds: 600), () {
             PageNavigateScreen().pushRemovUntil(context, const ChefHomePage());
           });
+        } else {
+          // Show error message
+          String errorMsg = value['msg'] ?? 'Failed to post dish. Please try again.';
+          Utils().myToast(context, msg: errorMsg);
+          log('Post dish error: $errorMsg');
         }
+      }).catchError((error) {
+        Utils().stopSpinner(context);
+        log('Post dish API error: $error');
+        Utils().myToast(context, msg: 'Failed to post dish. Please check your connection and try again.');
       });
     } catch (e) {
       Utils().stopSpinner(context);
-      log(e.toString());
+      log('Post dish exception: $e');
+      Utils().myToast(context, msg: 'An error occurred. Please try again.');
     }
   }
 }

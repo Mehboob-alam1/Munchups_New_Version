@@ -135,7 +135,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.munchups_app"
-        minSdk = flutter.minSdkVersion
+        // Stripe requires minSdk 21 or higher
+        minSdk = maxOf(21, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -172,6 +173,13 @@ android {
             // uses debug keystore automatically
         }
     }
+}
+
+dependencies {
+    // Required for Stripe - AppCompat theme support
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    // Material Components for Stripe compatibility
+    implementation("com.google.android.material:material:1.11.0")
 }
 
 flutter {

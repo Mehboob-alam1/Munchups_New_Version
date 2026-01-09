@@ -14,6 +14,9 @@ import 'package:munchups_app/Component/utils/sizeConfig/sizeConfig.dart';
 import 'package:munchups_app/Component/utils/utils.dart';
 import 'package:munchups_app/Screens/Buyer/Home/buyer_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../../../domain/entities/cart_item.dart';
+import '../../../presentation/providers/cart_provider.dart';
 
 class AddToCartPopup extends StatefulWidget {
   dynamic data;
@@ -29,7 +32,6 @@ class _AddToCartPopupState extends State<AddToCartPopup> {
   dynamic data;
   dynamic userData;
   dynamic checkItem;
-  dynamic checkItemLocal;
 
   @override
   void initState() {
@@ -44,9 +46,22 @@ class _AddToCartPopupState extends State<AddToCartPopup> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       userData = jsonDecode(prefs.getString('data').toString());
-      //prefs.remove('cart').toString();
-      checkItemLocal = jsonDecode(prefs.getString('cart').toString());
     });
+    // Check if item is already in cart using CartProvider
+    if (mounted) {
+      final cartProvider = context.read<CartProvider>();
+      await cartProvider.initializeCart();
+      if (mounted) {
+        setState(() {
+          final isInCart = cartProvider.isItemInCart(data['dish_id'].toString());
+          if (isInCart) {
+            final quantity = cartProvider.getItemQuantity(data['dish_id'].toString());
+            count = quantity;
+            countPrice = double.parse(data['dish_price']) * count;
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -171,11 +186,7 @@ class _AddToCartPopupState extends State<AddToCartPopup> {
               textSize: 16.0,
               onPressed: () {
                 if (checkItem['success'] == 'true') {
-                  if (checkItemLocal == null) {
-                    addToCartApiCall();
-                  } else {
-                    Utils().myToast(context, msg: 'Item already added!');
-                  }
+                  addToCartApiCall();
                 } else {
                   Utils().myToast(context, msg: checkItem['msg']);
                 }
@@ -196,29 +207,62 @@ class _AddToCartPopupState extends State<AddToCartPopup> {
   }
 
   void addToCartApiCall() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    
     try {
-      dynamic body = {
-        'user_id': userData['user_id'],
-        'chef_grocer_id':
-            (data['chef_id'] != null) ? data['chef_id'] : data['grocer_id'],
-        'dish_id': data['dish_id'],
-        'dish_name': data['dish_name'],
-        'dish_image': data['dish_images'] == 'NA'
-            ? ''
-            : data['dish_images'][0]['kitchen_image'],
-        'quantity': count,
-        'dish_price': double.parse(data['dish_price']),
-        'total_price': countPrice,
-      };
-
-      prefs.setString('cart', jsonEncode(body));
-      Utils().myToast(context, msg: 'Item added succesfully');
-      Timer(const Duration(milliseconds: 500), () {
-        PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
-      });
+      final cartProvider = context.read<CartProvider>();
+      
+      // Determine seller type and ID
+      final sellerId = (data['chef_id'] != null) 
+          ? data['chef_id'].toString() 
+          : data['grocer_id'].toString();
+      final sellerType = (data['chef_id'] != null) ? 'chef' : 'grocer';
+      
+      // Get seller name (fallback to shop_name or full_name or user_name)
+      String sellerName = 'Unknown';
+      if (data['shop_name'] != null && data['shop_name'].toString().isNotEmpty && data['shop_name'] != 'NA') {
+        sellerName = data['shop_name'].toString();
+      } else if (data['full_name'] != null && data['full_name'].toString().isNotEmpty) {
+        sellerName = data['full_name'].toString();
+      } else if (data['first_name'] != null && data['last_name'] != null) {
+        sellerName = '${data['first_name']} ${data['last_name']}';
+      } else if (data['user_name'] != null && data['user_name'].toString().isNotEmpty) {
+        sellerName = data['user_name'].toString();
+      }
+      
+      // Create CartItem
+      final cartItem = CartItem(
+        id: data['dish_id'].toString(),
+        name: data['dish_name'].toString(),
+        image: (data['dish_images'] != null && 
+                data['dish_images'] != 'NA' && 
+                data['dish_images'].isNotEmpty)
+            ? data['dish_images'][0]['kitchen_image'].toString()
+            : '',
+        price: double.parse(data['dish_price'].toString()),
+        quantity: count,
+        sellerId: sellerId,
+        sellerType: sellerType,
+        sellerName: sellerName,
+      );
+      
+      // Add to cart using CartProvider
+      await cartProvider.addItem(cartItem);
+      
+      if (mounted) {
+        Utils().myToast(context, msg: 'Item added successfully');
+        Navigator.of(context).pop(); // Close dialog
+        Timer(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            PageNavigateScreen().pushRemovUntil(context, const BuyerHomePage());
+          }
+        });
+      }
     } catch (e) {
       log('cart error = ' + e.toString());
+      if (mounted) {
+        Utils().myToast(context, msg: 'Error adding item to cart');
+      }
     }
   }
 }
