@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -306,17 +307,46 @@ class PostApiServer {
     var userData = jsonDecode(prefs.getString('data').toString());
 
     String url = Utils.baseUrl() + 'customer_token_test.php';
+    
+    log('🌐 API Request URL: $url');
+    log('🌐 API Request params: user_id=${userData['user_id']}, token=$token');
 
-    final request = http.MultipartRequest('POST', Uri.parse(url));
-    request.fields.addAll({
-      'user_id': userData['user_id'].toString(),
-      'token': token,
-    });
-    var res = await request.send();
-    var response = await res.stream.bytesToString();
-    dynamic data = jsonDecode(response);
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll({
+        'user_id': userData['user_id'].toString(),
+        'token': token,
+      });
+      
+      log('📤 Sending API request...');
+      var res = await request.send();
+      
+      log('📥 Response status code: ${res.statusCode}');
+      
+      if (res.statusCode != 200) {
+        log('⚠️ API returned non-200 status: ${res.statusCode}');
+        var errorResponse = await res.stream.bytesToString();
+        log('⚠️ Error response: $errorResponse');
+        throw Exception('API returned status ${res.statusCode}: $errorResponse');
+      }
+      
+      var response = await res.stream.bytesToString();
+      log('📥 Raw API response: $response');
+      
+      if (response.isEmpty) {
+        log('⚠️ API returned empty response');
+        throw Exception('API returned empty response');
+      }
+      
+      dynamic data = jsonDecode(response);
+      log('✅ API response parsed successfully: $data');
 
-    return data;
+      return data;
+    } catch (e, stackTrace) {
+      log('❌ Error in customerTokenTestApi: $e');
+      log('❌ Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   // DELETE api

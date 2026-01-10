@@ -332,10 +332,21 @@ class _CardPaymentFormPageState extends State<CardPaymentFormPage> {
 
   void customerTokenAPiCall(context, token) async {
     try {
+      log('📞 Calling customerTokenTestApi with token: $token');
+      log('📞 API URL: ${Utils.baseUrl()}customer_token_test.php');
+      
       await PostApiServer().customerTokenTestApi(token).then((value) {
+        log('📥 API Response received: $value');
         Utils().stopSpinner(context);
-        //Utils().myToast(context, msg: value['msg']);
-        if (value['success'] == 'true') {
+        
+        if (value != null && value['success'] == 'true') {
+          log('✅ API returned success=true, proceeding to next screen');
+          
+          // Show success message if available
+          if (value['msg'] != null) {
+            Utils().myToast(context, msg: value['msg']);
+          }
+          
           if (widget.type == 'order') {
             orderPlaceApiCall(context);
           } else {
@@ -344,12 +355,162 @@ class _CardPaymentFormPageState extends State<CardPaymentFormPage> {
                   .pushRemovUntil(context, const BuyerHomePage());
             });
           }
+        } else {
+          // API returned an error - show proper error dialog
+          log('⚠️ API did not return success=true');
+          log('⚠️ Response value: $value');
+          
+          String errorMessage = value != null && value['msg'] != null 
+              ? value['msg'] 
+              : 'Failed to save card details. Please try again.';
+          
+          // Show error dialog with proper message
+          _showErrorDialog(context, errorMessage);
         }
+      }).catchError((error, stackTrace) {
+        log('❌ API call failed with error: $error');
+        log('❌ Stack trace: $stackTrace');
+        Utils().stopSpinner(context);
+        
+        // Show error dialog for API call failure
+        String errorMessage = 'Network error occurred. Please check your connection and try again.';
+        if (error.toString().contains('SocketException') || 
+            error.toString().contains('TimeoutException')) {
+          errorMessage = 'Connection timeout. Please check your internet connection and try again.';
+        }
+        
+        _showErrorDialog(context, errorMessage);
       });
-    } catch (e) {
-      log(e.toString());
+    } catch (e, stackTrace) {
+      log('❌ Exception in customerTokenAPiCall: $e');
+      log('❌ Stack trace: $stackTrace');
       Utils().stopSpinner(context);
+      
+      _showErrorDialog(context, 'An unexpected error occurred. Please try again.');
     }
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Card Error',
+                  style: TextStyle(
+                    color: DynamicColor.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                if (message.toLowerCase().contains('real card') ||
+                    message.toLowerCase().contains('test card')) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Solution:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'You are using a real card in test mode. Please use one of Stripe\'s test cards:',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '• Success: 4242 4242 4242 4242\n• Decline: 4000 0000 0000 0002\n• Use any future expiry date and any 3-digit CVV',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () {
+                            // You can add URL launcher here if needed
+                            log('Visit: https://stripe.com/docs/testing');
+                          },
+                          child: Text(
+                            'Learn more: https://stripe.com/docs/testing',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: DynamicColor.primaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void orderPlaceApiCall(context) async {
